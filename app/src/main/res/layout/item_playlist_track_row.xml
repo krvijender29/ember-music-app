@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutTrackRowRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="10dp">
+
+    <!-- 1. Track Number OR Animated Equalizer -->
+    <FrameLayout
+        android:id="@+id/layoutIndexOrEq"
+        android:layout_width="30dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="6dp">
+
+        <TextView
+            android:id="@+id/tvTrackNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="monospace"
+            android:text="01"
+            android:textColor="@color/text_muted"
+            android:textSize="@dimen/type_track_index" />
+
+        <!-- 3-Bar Equalizer -->
+        <LinearLayout
+            android:id="@+id/layoutTrackEq"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:gravity="bottom|center_horizontal"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/eqBar1"
+                android:layout_width="3dp"
+                android:layout_height="8dp"
+                android:layout_marginEnd="2.5dp"
+                android:background="@color/accent_primary" />
+
+            <View
+                android:id="@+id/eqBar2"
+                android:layout_width="3dp"
+                android:layout_height="15dp"
+                android:layout_marginEnd="2.5dp"
+                android:background="@color/accent_primary" />
+
+            <View
+                android:id="@+id/eqBar3"
+                android:layout_width="3dp"
+                android:layout_height="10dp"
+                android:background="@color/accent_primary" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 2. 44x44dp Squircle Thumbnail (10dp radius) -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="12dp"
+        app:cardBackgroundColor="@color/surface_card"
+        app:cardCornerRadius="@dimen/radius_song_thumbnail"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/border_subtle"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/ivTrackThumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/rounded_card_bg" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- 3. Title & Artist -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTrackTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="Song Title"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/type_song_title" />
+
+        <TextView
+            android:id="@+id/tvTrackArtist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:maxLines="1"
+            android:text="Artist Name"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/type_artist_name" />
+    </LinearLayout>
+
+    <!-- 4. Duration -->
+    <TextView
+        android:id="@+id/tvTrackDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="10dp"
+        android:fontFamily="monospace"
+        android:text="3:45"
+        android:textColor="@color/text_muted"
+        android:textSize="@dimen/type_timestamp_duration" />
+
+    <!-- 5. Like Heart Button -->
+    <ImageView
+        android:id="@+id/ivTrackLike"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Like Song"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_heart"
+        app:tint="#71717A" />
+
+    <!-- 6. Custom Playlist Remove Button (✕) -->
+    <ImageView
+        android:id="@+id/btnTrackRemove"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Remove Track"
+        android:focusable="true"
+        android:padding="7dp"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:tint="#8E8E9A" />
+
+    <!-- 7. 3-dots Context Menu Button -->
+    <ImageView
+        android:id="@+id/btnTrackOptions"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Options"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_more_vert"
+        app:tint="#8E8E9A" />
+
+</LinearLayout>

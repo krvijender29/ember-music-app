@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="10dp">
+
+    <!-- Optional Rank Number / Active Equalizer Container -->
+    <FrameLayout
+        android:id="@+id/layoutRankOrEq"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="6dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvTrackRank"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="#1"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <!-- Animated Audio Equalizer Bars -->
+        <LinearLayout
+            android:id="@+id/layoutEqBars"
+            android:layout_width="wrap_content"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:gravity="bottom"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/eqBar1"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:background="@color/accent_primary" />
+
+            <View
+                android:id="@+id/eqBar2"
+                android:layout_width="3dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="2dp"
+                android:background="@color/accent_secondary" />
+
+            <View
+                android:id="@+id/eqBar3"
+                android:layout_width="3dp"
+                android:layout_height="8dp"
+                android:layout_marginStart="2dp"
+                android:background="@color/accent_primary" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Thumbnail Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:cardBackgroundColor="@color/bg_card"
+        app:cardCornerRadius="@dimen/radius_song_thumbnail"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/border_card"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/ivItemThumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/rounded_card_bg" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Track Info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvItemTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="Track Title"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/type_song_title" />
+
+        <TextView
+            android:id="@+id/tvItemSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:maxLines="1"
+            android:text="Artist Name • 03:45"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/type_artist_name" />
+    </LinearLayout>
+
+    <!-- Like Button -->
+    <ImageView
+        android:id="@+id/ivItemLike"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_heart" />
+
+    <!-- 3-Dots Options Menu -->
+    <ImageView
+        android:id="@+id/ivItemOptions"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_more_horiz"
+        app:tint="@color/text_secondary" />
+
+    <!-- Add to Queue Action Button -->
+    <ImageView
+        android:id="@+id/ivItemAdd"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_add"
+        android:visibility="gone"
+        app:tint="#FF5A36" />
+
+    <!-- Queue Delete / Cross Button -->
+    <ImageView
+        android:id="@+id/ivItemRemove"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="6dp"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:tint="#FF6B6B" />
+
+</LinearLayout>

@@ -1,0 +1,156 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- ========================================================= -->
+    <!-- Base application theme: EMBER Music Obsidian Noir        -->
+    <!-- Strictly adheres to EMBER Design Tokens & Typography Scale -->
+    <!-- ========================================================= -->
+    <style name="Theme.EMBER" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Brand Surfaces & Canvas -->
+        <item name="colorPrimary">@color/accent_primary</item>
+        <item name="colorPrimaryVariant">@color/bg_default</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/accent_secondary</item>
+        <item name="colorSecondaryVariant">@color/surface_card</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor">@color/bg_default</item>
+        <item name="android:navigationBarColor">@color/bg_default</item>
+        <item name="android:windowBackground">@color/bg_default</item>
+        <item name="android:colorBackground">@color/bg_default</item>
+        <item name="bottomSheetDialogTheme">@style/Widget.Ember.BottomSheetDialog</item>
+    </style>
+
+    <!-- ========================================================= -->
+    <!-- EMBER Typography Hierarchy Scale (11 Production Tiers)    -->
+    <!-- ========================================================= -->
+
+    <!-- Base Ember Text Appearance -->
+    <style name="TextAppearance.Ember" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 1. Splash Brand: 44sp, Weight 900 (Black), LetterSpacing -1.2px, #FFFFFF -->
+    <style name="TextAppearance.Ember.SplashBrand" parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="android:textSize">@dimen/type_splash_brand</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">-0.027</item>
+    </style>
+
+    <!-- 2. Screen Title (H1): 24sp, Weight 800 (Bold), LetterSpacing -0.5px, #FFFFFF -->
+    <style name="TextAppearance.Ember.ScreenTitleH1" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textSize">@dimen/type_screen_title_h1</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <!-- 3. Playlist Hero Title: 22sp, Weight 800 (Bold), #FFFFFF -->
+    <style name="TextAppearance.Ember.PlaylistHeroTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">@dimen/type_playlist_hero_title</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 4. Section Header (H2/H3): 18sp, Weight 700 (Bold), #FFFFFF -->
+    <style name="TextAppearance.Ember.SectionHeader" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textSize">@dimen/type_section_header</item>
+        <item name="android:fontFamily">sans-serif-bold</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 5. Song Title: 15sp, Weight 600, #FFFFFF -->
+    <style name="TextAppearance.Ember.SongTitle" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">@dimen/type_song_title</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 5b. Song Title (Active Playing): 15sp, Weight 700, #FF5A36 -->
+    <style name="TextAppearance.Ember.SongTitle.Active" parent="TextAppearance.Ember.SongTitle">
+        <item name="android:textSize">@dimen/type_song_title</item>
+        <item name="android:fontFamily">sans-serif-bold</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/accent_primary</item>
+    </style>
+
+    <!-- 6. Search Input: 14sp, Weight 500, #FFFFFF -->
+    <style name="TextAppearance.Ember.SearchInput" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_search_input</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorHint">@color/text_placeholder</item>
+    </style>
+
+    <!-- 7. Artist Name: 13sp, Weight 500, #A1A1AA -->
+    <style name="TextAppearance.Ember.ArtistName" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_artist_name</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <!-- 8. Filter Pill / Button: 12.5sp, Weight 600, #FFFFFF -->
+    <style name="TextAppearance.Ember.FilterPill" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_filter_pill</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 9. Timestamp Duration: 12sp, Mono, Weight 500, #71717A -->
+    <style name="TextAppearance.Ember.TimestampDuration" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_timestamp_duration</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/text_muted</item>
+    </style>
+
+    <!-- 10. Track Index: 11.5sp, Mono, Weight 600, #71717A -->
+    <style name="TextAppearance.Ember.TrackIndex" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_track_index</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textColor">@color/text_muted</item>
+    </style>
+
+    <!-- 11. Micro Badges ("ALBUM", "COLLECTION"): 10sp, Mono, Weight 800, #FF5A36, LetterSpacing 1.1px -->
+    <style name="TextAppearance.Ember.MicroBadge" parent="TextAppearance.Ember">
+        <item name="android:textSize">@dimen/type_micro_badge</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/accent_primary</item>
+        <item name="android:letterSpacing">0.11</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- ========================================================= -->
+    <!-- EMBER Component & Surface Widget Styles                   -->
+    <!-- ========================================================= -->
+    <style name="Widget.Ember.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface_card</item>
+        <item name="cardCornerRadius">@dimen/radius_card_tile</item>
+        <item name="strokeColor">@color/border_card</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
+    <style name="Widget.Ember.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Ember.BottomSheet</item>
+    </style>
+
+    <style name="Widget.Ember.BottomSheet" parent="Widget.MaterialComponents.BottomSheet">
+        <item name="android:background">@drawable/dialog_sheet_bg</item>
+    </style>
+
+    <style name="Theme.Ember.TransparentBottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.Ember.TransparentBottomSheet</item>
+    </style>
+
+    <style name="Widget.Ember.TransparentBottomSheet" parent="Widget.MaterialComponents.BottomSheet">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="ShapeAppearance.Ember.Circle" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

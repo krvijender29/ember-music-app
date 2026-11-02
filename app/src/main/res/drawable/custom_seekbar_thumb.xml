@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer ambient colored halo (22dp) matching theme -->
+    <item
+        android:id="@+id/thumbHalo"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="#4DFF5A36" />
+            <size
+                android:width="22dp"
+                android:height="22dp" />
+        </shape>
+    </item>
+    <!-- Crisp luminous pure white circular core (12dp) -->
+    <item
+        android:gravity="center"
+        android:bottom="5dp"
+        android:left="5dp"
+        android:right="5dp"
+        android:top="5dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF" />
+            <size
+                android:width="12dp"
+                android:height="12dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutOpenedPlaylistOverlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#08080C"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone">
+
+    <!-- 1. Ambient Dynamic Glow (Top 35% of Screen) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="320dp">
+
+        <ImageView
+            android:id="@+id/ivPlaylistAmbientGlow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.45"
+            android:scaleType="centerCrop"
+            android:src="@drawable/rounded_card_bg" />
+
+        <View
+            android:id="@+id/viewPlaylistAmbientGradient"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/playlist_ambient_scrim" />
+    </FrameLayout>
+
+    <!-- 2. Scrollable Body Content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollPlaylistContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Spacer for top sticky header -->
+            <View
+                android:id="@+id/viewPlaylistTopSpacer"
+                android:layout_width="match_parent"
+                android:layout_height="64dp" />
+
+            <!-- HERO HEADER SECTION -->
+            <LinearLayout
+                android:id="@+id/layoutPlaylistHeroSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="12dp">
+
+                <!-- Big 175x175dp Squircle Cover (20dp corner radius, 18dp drop shadow) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardPlaylistHeroCover"
+                    android:layout_width="175dp"
+                    android:layout_height="175dp"
+                    app:cardBackgroundColor="@color/surface_card"
+                    app:cardCornerRadius="@dimen/radius_big_album_cover"
+                    app:cardElevation="18dp"
+                    app:strokeColor="@color/border_card"
+                    app:strokeWidth="1dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- Standard Album/Playlist Image -->
+                        <ImageView
+                            android:id="@+id/ivPlaylistHeroCover"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/rounded_card_bg" />
+
+                        <!-- Liked Songs Signature Gradient + White Heart -->
+                        <FrameLayout
+                            android:id="@+id/layoutLikedHeroCover"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/liked_songs_hero_gradient"
+                            android:visibility="gone">
+
+                            <ImageView
+                                android:layout_width="68dp"
+                                android:layout_height="68dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_heart_filled"
+                                app:tint="#FFFFFF" />
+                        </FrameLayout>
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Capsule Badge ("OFFICIAL ALBUM" / "CUSTOM PLAYLIST" / "PERSONAL COLLECTION") -->
+                <TextView
+                    android:id="@+id/tvPlaylistBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/capsule_badge_bg"
+                    android:fontFamily="monospace"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="OFFICIAL ALBUM"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="@dimen/type_micro_badge"
+                    android:letterSpacing="0.11"
+                    android:textAllCaps="true"
+                    android:textStyle="bold" />
+
+                <!-- Playlist Title (Bold 22sp #FFFFFF, max 2 lines) -->
+                <TextView
+                    android:id="@+id/tvPlaylistHeroTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-black"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:text="Playlist Title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/type_playlist_hero_title" />
+
+                <!-- Metadata line: Creator Name • Song Count • Total Duration -->
+                <TextView
+                    android:id="@+id/tvPlaylistMetadata"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="sans-serif"
+                    android:gravity="center"
+                    android:text="EMBER Music • 18 songs • 56 min"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/type_artist_name" />
+            </LinearLayout>
+
+            <!-- 4. FLOATING ACTION CONTROLS ROW -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="14dp">
+
+                <!-- Left Controls Group -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <!-- Save to Library Pill Button -->
+                    <LinearLayout
+                        android:id="@+id/btnSaveToLibrary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/pill_library_bg"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="14dp">
+
+                        <ImageView
+                            android:id="@+id/ivSaveToLibraryIcon"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:layout_marginEnd="6dp"
+                            android:src="@drawable/ic_heart"
+                            app:tint="#FFFFFF" />
+
+                        <TextView
+                            android:id="@+id/tvSaveToLibraryText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="+ Save to Library"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12.5sp" />
+                    </LinearLayout>
+
+                    <!-- Custom Playlist: Delete Trash Button -->
+                    <LinearLayout
+                        android:id="@+id/btnDeletePlaylist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/pill_delete_bg"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/ic_close"
+                            app:tint="#FF453A" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="Delete"
+                            android:textColor="#FF453A"
+                            android:textSize="12.5sp" />
+                    </LinearLayout>
+
+                    <!-- Shuffle Play Button -->
+                    <ImageView
+                        android:id="@+id/btnPlaylistShuffle"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="10dp"
+                        android:background="@drawable/circle_frosted_btn_bg"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_shuffle"
+                        app:tint="#FFFFFF" />
+
+                    <!-- Action Share Button -->
+                    <ImageView
+                        android:id="@+id/btnPlaylistActionShare"
+                        android:layout_width="38dp"
+                        android:layout_height="38dp"
+                        android:background="@drawable/circle_frosted_btn_bg"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="9dp"
+                        android:src="@drawable/ic_share"
+                        app:tint="#FFFFFF" />
+                </LinearLayout>
+
+                <!-- Right: Big 52x52dp Primary Play Button -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnPlaylistPlayAll"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardBackgroundColor="#00000000"
+                    app:cardCornerRadius="26dp"
+                    app:cardElevation="10dp"
+                    app:strokeWidth="0dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/primary_play_button_bg">
+
+                        <ImageView
+                            android:id="@+id/ivPlaylistPlayIcon"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center"
+                            android:layout_marginStart="2dp"
+                            android:src="@drawable/ic_play"
+                            app:tint="#08080C" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- 5. IN-PLAYLIST FAST SEARCH / FILTER BAR -->
+            <LinearLayout
+                android:id="@+id/layoutPlaylistFilterBar"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/search_filter_bar_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#71717A" />
+
+                <EditText
+                    android:id="@+id/etPlaylistFilter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:fontFamily="sans-serif"
+                    android:hint="Filter songs in this playlist..."
+                    android:imeOptions="actionDone"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_placeholder"
+                    android:textSize="@dimen/type_search_input" />
+
+                <ImageView
+                    android:id="@+id/btnPlaylistFilterClear"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="2dp"
+                    android:src="@drawable/ic_close"
+                    android:visibility="gone"
+                    app:tint="#71717A" />
+            </LinearLayout>
+
+            <!-- Empty Filter Search Result State -->
+            <LinearLayout
+                android:id="@+id/layoutPlaylistEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:paddingVertical="36dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#353545" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="No matching tracks found"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
+                    android:text="Try searching for a different title or artist"
+                    android:textColor="#71717A"
+                    android:textSize="12.5sp" />
+            </LinearLayout>
+
+            <!-- Progress Loading Spinner -->
+            <ProgressBar
+                android:id="@+id/pbPlaylistLoading"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginVertical="24dp"
+                android:indeterminateTint="#FF5A36"
+                android:visibility="gone" />
+
+            <!-- 6. TRACKLIST RECYCLERVIEW -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPlaylistTracks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+            <!-- 7. BOTTOM PADDING SPACING (160dp reserved so never covered by Mini Player / Tab Bar) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="170dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 2. COLLAPSING STICKY NAVIGATION HEADER (60 FPS on scroll) -->
+    <FrameLayout
+        android:id="@+id/layoutPlaylistStickyHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="12dp"
+        android:layout_gravity="top">
+
+        <!-- Frosted Sticky Header Backdrop (interpolated alpha 0 -> 1 on scroll) -->
+        <View
+            android:id="@+id/viewPlaylistStickyHeaderBg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:background="@drawable/bg_sticky_header_glass" />
+
+        <!-- Subtle amber accent rim at bottom border -->
+        <View
+            android:id="@+id/viewStickyHeaderAccentRim"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="bottom"
+            android:alpha="0"
+            android:background="#33FF5A36" />
+
+        <!-- Toolbar Content (aligned to bottom of status bar container) -->
+        <RelativeLayout
+            android:id="@+id/layoutStickyHeaderContent"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_gravity="bottom"
+            android:paddingHorizontal="14dp">
+
+            <!-- Circular Frosted Back Button (←) -->
+            <ImageView
+                android:id="@+id/btnPlaylistBack"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/circle_frosted_btn_bg"
+                android:clickable="true"
+                android:contentDescription="Back"
+                android:focusable="true"
+                android:padding="9dp"
+                android:src="@drawable/ic_back"
+                app:tint="#FFFFFF" />
+
+            <!-- Center Info (Cover + Title + Subtitle) -->
+            <LinearLayout
+                android:id="@+id/layoutStickyCenterInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="8dp"
+                android:layout_toEndOf="@+id/btnPlaylistBack"
+                android:layout_toStartOf="@+id/layoutStickyRightActions"
+                android:alpha="0"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Mini Squircle Artwork -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardStickyCover"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    app:cardBackgroundColor="@color/bg_card"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/border_card"
+                    app:strokeWidth="1dp">
+
+                    <ImageView
+                        android:id="@+id/ivStickyCover"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/rounded_card_bg" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Titles Column -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="9dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStickyPlaylistTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="Playlist Title"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvStickyPlaylistSubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="OFFICIAL ALBUM"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10.5sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Right Controls: Quick Play + Share + 3-dots -->
+            <LinearLayout
+                android:id="@+id/layoutStickyRightActions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Sticky Quick Play Button -->
+                <FrameLayout
+                    android:id="@+id/btnStickyPlayAll"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_marginEnd="8dp"
+                    android:alpha="0"
+                    android:background="@drawable/circle_white_play_bg"
+                    android:clickable="true"
+                    android:elevation="4dp"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_play_black" />
+                </FrameLayout>
+
+                <ImageView
+                    android:id="@+id/btnPlaylistHeaderShare"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/circle_frosted_btn_bg"
+                    android:clickable="true"
+                    android:contentDescription="Share"
+                    android:focusable="true"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_share"
+                    app:tint="#FFFFFF" />
+
+                <ImageView
+                    android:id="@+id/btnPlaylistHeaderOptions"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="@drawable/circle_frosted_btn_bg"
+                    android:clickable="true"
+                    android:contentDescription="More Options"
+                    android:focusable="true"
+                    android:padding="9dp"
+                    android:src="@drawable/ic_more_vert"
+                    app:tint="#FFFFFF" />
+            </LinearLayout>
+        </RelativeLayout>
+    </FrameLayout>
+
+</FrameLayout>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ========================================================= -->
+    <!-- EMBER Music Official Corner Radii Tokens                  -->
+    <!-- ========================================================= -->
+    <!-- Big Album Cover: 20dp squircle -->
+    <dimen name="radius_big_album_cover">20dp</dimen>
+
+    <!-- Card / Collection Tile: 16dp -->
+    <dimen name="radius_card_tile">16dp</dimen>
+
+    <!-- Song Thumbnail: 10dp -->
+    <dimen name="radius_song_thumbnail">10dp</dimen>
+
+    <!-- Filter Pills & Action Buttons: 999dp (Fully rounded capsule) -->
+    <dimen name="radius_capsule_pill">999dp</dimen>
+
+    <!-- Bottom Sheet Top Corners: 24dp -->
+    <dimen name="radius_bottom_sheet_top">24dp</dimen>
+
+    <!-- Elevated Menu & Popover: 16dp -->
+    <dimen name="radius_elevated_menu">16dp</dimen>
+
+    <!-- ========================================================= -->
+    <!-- EMBER Music Official Typography Scale Tokens              -->
+    <!-- ========================================================= -->
+    <!-- 1. Splash Brand: 44sp, Weight 900 (Black), LetterSpacing -1.2px -->
+    <dimen name="type_splash_brand">44sp</dimen>
+
+    <!-- 2. Screen Title (H1): 24sp, Weight 800 (Bold), LetterSpacing -0.5px -->
+    <dimen name="type_screen_title_h1">24sp</dimen>
+
+    <!-- 3. Playlist Hero Title: 22sp, Weight 800 (Bold) -->
+    <dimen name="type_playlist_hero_title">22sp</dimen>
+
+    <!-- 4. Section Header (H2/H3): 18sp, Weight 700 (Bold) -->
+    <dimen name="type_section_header">18sp</dimen>
+
+    <!-- 5. Song Title: 15sp, Weight 600 (Playing: Weight 700) -->
+    <dimen name="type_song_title">15sp</dimen>
+
+    <!-- 6. Search Input: 14sp, Weight 500 -->
+    <dimen name="type_search_input">14sp</dimen>
+
+    <!-- 7. Artist Name: 13sp, Weight 500 -->
+    <dimen name="type_artist_name">13sp</dimen>
+
+    <!-- 8. Filter Pill / Button: 12.5sp, Weight 600 -->
+    <dimen name="type_filter_pill">12.5sp</dimen>
+
+    <!-- 9. Timestamp Duration: 12sp, Mono, Weight 500 -->
+    <dimen name="type_timestamp_duration">12sp</dimen>
+
+    <!-- 10. Track Index: 11.5sp, Mono, Weight 600 -->
+    <dimen name="type_track_index">11.5sp</dimen>
+
+    <!-- 11. Micro Badges ("ALBUM", "COLLECTION"): 10sp, Mono, Weight 800, LetterSpacing 1.1px -->
+    <dimen name="type_micro_badge">10sp</dimen>
+
+    <!-- Spacing Standards -->
+    <dimen name="spacing_screen_edge">20dp</dimen>
+    <dimen name="spacing_card_gap">12dp</dimen>
+    <dimen name="mini_player_height">64dp</dimen>
+    <dimen name="bottom_nav_height">64dp</dimen>
+    <dimen name="sticky_header_height">56dp</dimen>
+    <dimen name="primary_play_btn_size">52dp</dimen>
+</resources>

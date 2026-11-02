@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. Deep Obsidian Frosted Acrylic Base (~94% Opaque - Zero text bleed-through) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#F414141D"
+                android:centerColor="#EE0E0E16"
+                android:endColor="#E80A0A10" />
+        </shape>
+    </item>
+
+    <!-- 2. Frosted Specular Refraction (Top-lit glass sheen) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#2BFFFFFF"
+                android:centerColor="#08FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- 3. Outer Subtle Bevel Stroke (rgba(255, 255, 255, 0.18)) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <stroke
+                android:width="1.2dp"
+                android:color="#2EFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

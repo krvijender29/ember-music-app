@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1. Deep Obsidian Noir Base -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg_primary" />
+        </shape>
+    </item>
+
+    <!-- 2. Electric Cyber-Violet Aurora Glow (Top-Right) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="360dp"
+                android:centerX="0.90"
+                android:centerY="0.08"
+                android:startColor="#267928CA"
+                android:centerColor="#0E7928CA"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+
+    <!-- 3. Ember-Flame Aurora Glow (Top-Left) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="340dp"
+                android:centerX="0.10"
+                android:centerY="0.05"
+                android:startColor="#2DFF5A36"
+                android:centerColor="#12FF5A36"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+</layer-list>

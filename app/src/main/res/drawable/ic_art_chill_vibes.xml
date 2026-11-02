@@ -1,0 +1,95 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="146dp"
+    android:viewportWidth="120"
+    android:viewportHeight="146">
+
+    <!-- Sky Gradient Background -->
+    <path
+        android:pathData="M0,0 L120,0 L120,146 L0,146 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="270"
+                android:startX="60"
+                android:startY="0"
+                android:endX="60"
+                android:endY="146"
+                android:type="linear">
+                <item android:color="#2D2B3D" android:offset="0.0" />
+                <item android:color="#463644" android:offset="0.3" />
+                <item android:color="#784B42" android:offset="0.6" />
+                <item android:color="#8E5D49" android:offset="0.75" />
+                <item android:color="#1A1218" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Warm Horizon Sun Glow -->
+    <path
+        android:pathData="M 60,82 m -35,0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="60"
+                android:centerY="82"
+                android:gradientRadius="35"
+                android:type="radial">
+                <item android:color="#60E88E58" android:offset="0.0" />
+                <item android:color="#20C4623C" android:offset="0.6" />
+                <item android:color="#00000000" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Distant Horizon Clouds -->
+    <path
+        android:fillColor="#303A2830"
+        android:pathData="M0,86 Q30,80 60,85 T120,83 L120,105 L0,105 Z" />
+    <path
+        android:fillColor="#50281C24"
+        android:pathData="M0,90 Q40,84 80,88 T120,86 L120,110 L0,110 Z" />
+
+    <!-- Ledge / Hill Silhouette -->
+    <path
+        android:fillColor="#151018"
+        android:pathData="M0,98 Q35,93 75,98 T120,95 L120,146 L0,146 Z" />
+
+    <!-- Seated Person Silhouette Facing Right -->
+    <!-- Head -->
+    <path
+        android:fillColor="#130E16"
+        android:pathData="M 58,62 m -6,0 a 6,6 0 1,0 12,0 a 6,6 0 1,0 -12,0" />
+
+    <!-- Hair / Cap detail -->
+    <path
+        android:fillColor="#0D0910"
+        android:pathData="M 52,60 Q 56,54 63,58 Q 66,61 63,64 Z" />
+
+    <!-- Torso, Back, and Bent Knees -->
+    <path
+        android:fillColor="#130E16"
+        android:pathData="M 55,67 C 54,72 50,78 48,88 C 47,94 50,96 55,96 C 62,96 66,93 69,87 C 72,81 74,74 71,72 C 68,70 65,74 62,79 C 60,82 58,85 55,85 C 53,85 53,80 55,75 C 56,71 58,68 55,67 Z" />
+
+    <!-- Legs Resting Forward -->
+    <path
+        android:fillColor="#130E16"
+        android:pathData="M 53,95 C 58,95 65,94 72,92 C 76,91 78,93 75,96 C 70,98 62,99 53,98 Z" />
+
+    <!-- Subtle Vignette / Shadow at bottom for text readability -->
+    <path
+        android:pathData="M0,100 L120,100 L120,146 L0,146 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:angle="270"
+                android:startX="60"
+                android:startY="100"
+                android:endX="60"
+                android:endY="146"
+                android:type="linear">
+                <item android:color="#00000000" android:offset="0.0" />
+                <item android:color="#CC0C0910" android:offset="0.7" />
+                <item android:color="#F00C0910" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

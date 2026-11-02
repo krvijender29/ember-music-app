@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "198177903871",
+    "project_id": "ember-dcb78",
+    "storage_bucket": "ember-dcb78.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:198177903871:android:c73f79f54bb64a28f628ca",
+        "android_client_info": {
+          "package_name": "com.example.ember"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "198177903871-hkq4i51gu4v5kh05cjfvigjf3mdqjt4e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuGV-kOO2QpuIRQ8h2DZoKOfIOR269QfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "198177903871-hkq4i51gu4v5kh05cjfvigjf3mdqjt4e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ========================================================= -->
+    <!-- EMBER Music Official Design Tokens - Production System    -->
+    <!-- Strictly aligned with EMBER web architecture & mobile spec -->
+    <!-- ========================================================= -->
+
+    <!-- 1. Canvas & Surfaces -->
+    <!-- Background Default: #070709 (Liquid Obsidian Noir) -->
+    <color name="bg_default">#070709</color>
+    <color name="bg_primary">#070709</color>
+    <color name="bg_secondary">#0E0E14</color>
+
+    <!-- Elevated Surface (Sheets, Menus): #14141E -->
+    <color name="surface_elevated">#14141E</color>
+    <color name="bg_elevated">#14141E</color>
+
+    <!-- Cards & Row Items: #101018 -->
+    <color name="surface_card">#101018</color>
+    <color name="bg_card">#101018</color>
+    <color name="bg_surface">#101018</color>
+    <color name="bg_input">#14141E</color>
+
+    <!-- Frosted Glass Surface: rgba(255, 255, 255, 0.08) with 24px blur -->
+    <color name="surface_frosted">#14FFFFFF</color>
+    <color name="border_glass">#2BFFFFFF</color>
+
+    <!-- Sticky Header & Mini Player: rgba(12, 12, 18, 0.88) with 30px blur -->
+    <color name="surface_sticky_header">#E00C0C12</color>
+    <color name="surface_mini_player">#E00C0C12</color>
+
+    <!-- 2. Typography Tiers -->
+    <!-- Text Primary (Titles, Headers): #FFFFFF -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="player_text_primary">#FFFFFF</color>
+
+    <!-- Text Secondary (Artist, Descriptions): #A1A1AA -->
+    <color name="text_secondary">#A1A1AA</color>
+    <color name="player_text_secondary">#A1A1AA</color>
+
+    <!-- Text Muted (Durations, Index Numbers, Inactive Icons): #71717A -->
+    <color name="text_muted">#71717A</color>
+    <color name="player_icon_muted">#71717A</color>
+
+    <!-- Text Placeholder: #52525B -->
+    <color name="text_placeholder">#52525B</color>
+
+    <!-- 3. Brand Signature Accents -->
+    <!-- Accent Primary: #FF5A36 (Fiery Coral Amber - for active track title, seekbar, active tab) -->
+    <color name="accent_primary">#FF5A36</color>
+    <color name="player_accent">#FF5A36</color>
+    <color name="accent_secondary">#FF8A45</color>
+    <color name="accent_gradient_start">#FF5A36</color>
+    <color name="accent_gradient_end">#FF8A45</color>
+
+    <!-- Liked Songs Accent: #7928CA (Electric Purple) -->
+    <color name="accent_liked_songs">#7928CA</color>
+
+    <!-- Accent Soft (Badges/Tints): rgba(255, 90, 54, 0.14) -->
+    <color name="accent_soft">#24FF5A36</color>
+    <color name="accent_glow">#40FF5A36</color>
+
+    <!-- Destructive (Delete/Remove): #FF453A -->
+    <color name="destructive">#FF453A</color>
+    <color name="accent_crimson">#FF453A</color>
+
+    <!-- Functional Accents -->
+    <color name="accent_green">#34C759</color>
+    <color name="accent_white">#FFFFFF</color>
+
+    <!-- 4. Borders -->
+    <!-- Border Subtle: rgba(255, 255, 255, 0.08) -->
+    <color name="border_subtle">#14FFFFFF</color>
+
+    <!-- Border Card: rgba(255, 255, 255, 0.10) -->
+    <color name="border_card">#1AFFFFFF</color>
+    <color name="surface_border">#1AFFFFFF</color>
+
+    <!-- Border Accent Active: rgba(255, 90, 54, 0.35) -->
+    <color name="border_accent_active">#59FF5A36</color>
+
+    <!-- Now Playing / Player Screen Specialized Mappings -->
+    <color name="player_bg">#090909</color>
+    <color name="player_surface">#181818</color>
+    <color name="player_secondary_surface">#141414</color>
+    <color name="player_border">#1AFFFFFF</color>
+    <color name="player_vinyl_surface">#090909</color>
+    <color name="player_gold_spindle">#D4AF37</color>
+    <color name="lossless_text">#FF5A36</color>
+    <color name="awake_text">#FF5A36</color>
+    <color name="player_sheet_bg">#090909</color>
+    <color name="player_header_title">#A1A1AA</color>
+    <color name="action_btn_bg">#181818</color>
+    <color name="action_btn_border">#1AFFFFFF</color>
+    <color name="badge_bg_color">#24FF5A36</color>
+
+    <!-- Genre Gradients -->
+    <color name="genre_bollywood_start">#9C27B0</color>
+    <color name="genre_bollywood_end">#4A148C</color>
+    <color name="genre_punjabi_start">#FF9800</color>
+    <color name="genre_punjabi_end">#E65100</color>
+    <color name="genre_hiphop_start">#E53935</color>
+    <color name="genre_hiphop_end">#880E4F</color>
+    <color name="genre_pop_start">#1E88E5</color>
+    <color name="genre_pop_end">#0D47A1</color>
+    <color name="genre_lofi_start">#00897B</color>
+    <color name="genre_lofi_end">#004D40</color>
+    <color name="genre_rnb_start">#5E35B1</color>
+    <color name="genre_rnb_end">#311B92</color>
+
+    <!-- Standards -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
