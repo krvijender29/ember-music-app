@@ -53,9 +53,9 @@ object EmberUpdateManager {
     const val KEY_RELEASE_NOTES = "release_notes"
     const val KEY_FORCE_UPDATE = "force_update"
 
-    // Fallback release repository on GitHub Releases
+    // Fallback release repository on GitHub
     private const val DEFAULT_RELEASE_APK_URL =
-        "https://github.com/krvijender29/ember-music-app/releases/latest/download/app-debug.apk"
+        "https://github.com/krvijender29/ember-music-app/raw/main/release/app-debug.apk"
 
     data class UpdateInfo(
         val latestVersionCode: Long,

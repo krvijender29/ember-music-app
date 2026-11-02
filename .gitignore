@@ -10,6 +10,7 @@
 .cxx
 local.properties
 *.apk
+!release/*.apk
 *.aab
 *.ap_
 .kotlin/
