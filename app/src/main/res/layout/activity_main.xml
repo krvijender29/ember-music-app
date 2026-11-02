@@ -5805,6 +5805,66 @@
                                     android:layout_marginStart="52dp"
                                     android:background="#1C1A24" />
 
+                                <!-- Row 2.5: App Updates -->
+                                <RelativeLayout
+                                    android:id="@+id/layoutMenuUpdates"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="56dp"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    android:paddingStart="16dp"
+                                    android:paddingEnd="16dp">
+
+                                    <ImageView
+                                        android:id="@+id/ivIconAppUpdates"
+                                        android:layout_width="22dp"
+                                        android:layout_height="22dp"
+                                        android:layout_alignParentStart="true"
+                                        android:layout_centerVertical="true"
+                                        android:src="@drawable/ic_system_update"
+                                        app:tint="#B0B0C0" />
+
+                                    <LinearLayout
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_centerVertical="true"
+                                        android:layout_marginStart="14dp"
+                                        android:layout_toEndOf="@+id/ivIconAppUpdates"
+                                        android:orientation="vertical">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:fontFamily="sans-serif-medium"
+                                            android:text="App Updates"
+                                            android:textColor="@color/white"
+                                            android:textSize="15sp" />
+
+                                        <TextView
+                                            android:id="@+id/tvProfileMenuUpdateBadge"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="Version 2.4.0 • Tap to check"
+                                            android:textColor="#8E8E9B"
+                                            android:textSize="11.5sp" />
+                                    </LinearLayout>
+
+                                    <ImageView
+                                        android:layout_width="16dp"
+                                        android:layout_height="16dp"
+                                        android:layout_alignParentEnd="true"
+                                        android:layout_centerVertical="true"
+                                        android:src="@drawable/ic_chevron_right"
+                                        app:tint="#606070" />
+                                </RelativeLayout>
+
+                                <!-- Divider -->
+                                <View
+                                    android:layout_width="match_parent"
+                                    android:layout_height="1dp"
+                                    android:layout_marginStart="52dp"
+                                    android:background="#1C1A24" />
+
                                 <!-- Row 3: Privacy & Security -->
                                 <RelativeLayout
                                     android:id="@+id/layoutMenuPrivacy"

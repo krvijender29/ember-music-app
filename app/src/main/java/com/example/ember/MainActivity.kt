@@ -1,5 +1,7 @@
 package com.example.ember
 
+import com.example.ember.update.EmberUpdateManager
+
 import com.example.ember.util.ThumbnailLoadingDrawable
 import com.example.ember.ui.EmberShimmerLayout
 import com.example.ember.ui.EmberRadialBufferView
@@ -1364,6 +1366,12 @@ class MainActivity : AppCompatActivity() {
         // App Opening Screen & Initial State Gate
 
         checkAuthAndDisplayOpeningScreen()
+
+        // Background Check for Custom APK Updates
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(4500)
+            triggerAppUpdateFlow(isManual = false)
+        }
 
     }
 
@@ -10693,6 +10701,31 @@ class MainActivity : AppCompatActivity() {
             openAppSettingsBottomSheet()
         }
 
+        findViewById<View>(R.id.layoutMenuUpdates)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            triggerAppUpdateFlow(isManual = true)
+        }
+
+        findViewById<View>(R.id.layoutMenuUpdates)?.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showUpdateAvailableDialog(
+                EmberUpdateManager.UpdateInfo(
+                    latestVersionCode = EmberUpdateManager.getCurrentVersionCode(this) + 1,
+                    latestVersionName = "2.4.1",
+                    apkDownloadUrl = "https://github.com/krvijender29/ember-music-app/releases/latest/download/app-debug.apk",
+                    releaseNotes = "• Studio Fidelity 320 kbps stream enhancements\n• Custom APK update engine with cryptographic signature verification\n• Improved lockscreen playback controls\n• Next-Gen Recommendation Engine optimizations",
+                    isForceUpdate = false,
+                    currentVersionCode = EmberUpdateManager.getCurrentVersionCode(this),
+                    currentVersionName = EmberUpdateManager.getCurrentVersionName(this),
+                    isUpdateAvailable = true
+                )
+            )
+            true
+        }
+
+        findViewById<TextView>(R.id.tvProfileMenuUpdateBadge)?.text =
+            "v${EmberUpdateManager.getCurrentVersionName(this)} (Build ${EmberUpdateManager.getCurrentVersionCode(this)}) • Tap to check"
+
         findViewById<View>(R.id.layoutMenuPrivacy)?.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             openPrivacySecurityDialog()
@@ -10954,7 +10987,257 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+                // APP UPDATES WIRING
+        val tvAppCurrentVersion = view.findViewById<TextView>(R.id.dialogTvCurrentVersion)
+        val tvAppUpdateStatus = view.findViewById<TextView>(R.id.dialogTvUpdateStatus)
+        val btnCheckUpdates = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnCheckUpdates)
+        val layoutUpdateAvailable = view.findViewById<View>(R.id.dialogLayoutUpdateAvailable)
+        val tvNewVersionName = view.findViewById<TextView>(R.id.dialogTvNewVersionName)
+        val tvUpdateNotes = view.findViewById<TextView>(R.id.dialogTvUpdateNotes)
+        val btnUpdateNow = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.dialogBtnUpdateNow)
+        val layoutUpdateProgress = view.findViewById<View>(R.id.dialogLayoutUpdateProgress)
+        val pbUpdate = view.findViewById<ProgressBar>(R.id.dialogPbUpdate)
+        val tvProgressText = view.findViewById<TextView>(R.id.dialogTvProgressText)
+
+        tvAppCurrentVersion?.text = "EMBER v${EmberUpdateManager.getCurrentVersionName(this)} (Build ${EmberUpdateManager.getCurrentVersionCode(this)})"
+        tvAppUpdateStatus?.text = "Tap Check to query latest release"
+
+        var pendingSettingsUpdateInfo: EmberUpdateManager.UpdateInfo? = null
+
+        val settingsDownloadListener: (EmberUpdateManager.DownloadState) -> Unit = { state ->
+            when (state) {
+                is EmberUpdateManager.DownloadState.Starting -> {
+                    layoutUpdateProgress?.visibility = View.VISIBLE
+                    pbUpdate?.progress = 0
+                    tvProgressText?.text = "Initiating download..."
+                    btnUpdateNow?.isEnabled = false
+                }
+                is EmberUpdateManager.DownloadState.Progress -> {
+                    layoutUpdateProgress?.visibility = View.VISIBLE
+                    pbUpdate?.progress = state.percent
+                    val mbDownloaded = state.bytesDownloaded / (1024.0 * 1024.0)
+                    val mbTotal = state.totalBytes / (1024.0 * 1024.0)
+                    tvProgressText?.text = "Downloading: ${state.percent}% (${String.format("%.1f", mbDownloaded)} MB / ${String.format("%.1f", mbTotal)} MB)"
+                }
+                is EmberUpdateManager.DownloadState.Completed -> {
+                    layoutUpdateProgress?.visibility = View.VISIBLE
+                    pbUpdate?.progress = 100
+                    tvProgressText?.text = "Download complete! Opening installer..."
+                    btnUpdateNow?.isEnabled = true
+                    btnUpdateNow?.text = "Install Update"
+                    EmberUpdateManager.installApk(this, state.apkFile)
+                }
+                is EmberUpdateManager.DownloadState.VerificationFailed -> {
+                    layoutUpdateProgress?.visibility = View.GONE
+                    btnUpdateNow?.isEnabled = true
+                    tvAppUpdateStatus?.text = "Security verification failed"
+                    tvAppUpdateStatus?.setTextColor(Color.parseColor("#EF4444"))
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle("Security Alert")
+                        .setMessage(state.reason)
+                        .setPositiveButton("Dismiss", null)
+                        .show()
+                }
+                is EmberUpdateManager.DownloadState.Failed -> {
+                    layoutUpdateProgress?.visibility = View.GONE
+                    btnUpdateNow?.isEnabled = true
+                    tvAppUpdateStatus?.text = state.reason
+                    tvAppUpdateStatus?.setTextColor(Color.parseColor("#EF4444"))
+                    Toast.makeText(this, state.reason, Toast.LENGTH_LONG).show()
+                }
+                else -> {}
+            }
+        }
+
+        EmberUpdateManager.addDownloadListener(settingsDownloadListener)
+        dialog.setOnDismissListener {
+            EmberUpdateManager.removeDownloadListener(settingsDownloadListener)
+        }
+
+        btnCheckUpdates?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            btnCheckUpdates.isEnabled = false
+            tvAppUpdateStatus?.text = "Checking Firebase Remote Config..."
+            tvAppUpdateStatus?.setTextColor(Color.parseColor("#FF9D5C"))
+
+            lifecycleScope.launch {
+                when (val result = EmberUpdateManager.checkForUpdates(this@MainActivity)) {
+                    is EmberUpdateManager.UpdateCheckResult.Available -> {
+                        pendingSettingsUpdateInfo = result.updateInfo
+                        tvAppUpdateStatus?.text = "Update Available: v${result.updateInfo.latestVersionName}"
+                        tvAppUpdateStatus?.setTextColor(Color.parseColor("#FF5A36"))
+                        layoutUpdateAvailable?.visibility = View.VISIBLE
+                        tvNewVersionName?.text = "New Version: v${result.updateInfo.latestVersionName} (Build ${result.updateInfo.latestVersionCode})"
+                        tvUpdateNotes?.text = result.updateInfo.releaseNotes
+                        showUpdateAvailableDialog(result.updateInfo)
+                    }
+                    is EmberUpdateManager.UpdateCheckResult.UpToDate -> {
+                        tvAppUpdateStatus?.text = "You're using the latest version of EMBER."
+                        tvAppUpdateStatus?.setTextColor(Color.parseColor("#34D399"))
+                        layoutUpdateAvailable?.visibility = View.GONE
+                        Toast.makeText(this@MainActivity, "You're using the latest version of EMBER.", Toast.LENGTH_SHORT).show()
+                    }
+                    is EmberUpdateManager.UpdateCheckResult.Error -> {
+                        tvAppUpdateStatus?.text = result.message
+                        tvAppUpdateStatus?.setTextColor(Color.parseColor("#EF4444"))
+                        Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                btnCheckUpdates.isEnabled = true
+            }
+        }
+
+        btnUpdateNow?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            val info = pendingSettingsUpdateInfo ?: return@setOnClickListener
+            btnUpdateNow.isEnabled = false
+            layoutUpdateProgress?.visibility = View.VISIBLE
+            EmberUpdateManager.startApkDownload(this, info, lifecycleScope)
+        }
+
         dialog.show()
+    }
+
+    
+    private fun showUpdateAvailableDialog(updateInfo: EmberUpdateManager.UpdateInfo) {
+        val dialog = BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.dialog_update_available, null)
+        dialog.setContentView(view)
+
+        if (updateInfo.isForceUpdate) {
+            dialog.setCancelable(false)
+        }
+
+        view.findViewById<View>(R.id.btnDismissUpdateDialog)?.setOnClickListener {
+            if (!updateInfo.isForceUpdate) {
+                dialog.dismiss()
+            }
+        }
+
+        val tvDialogVersionPill = view.findViewById<TextView>(R.id.tvDialogVersionPill)
+        val tvDialogCurrentVersion = view.findViewById<TextView>(R.id.tvDialogCurrentVersion)
+        val tvDialogReleaseNotes = view.findViewById<TextView>(R.id.tvDialogReleaseNotes)
+        val btnDialogUpdateNow = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDialogUpdateNow)
+        val btnDialogUpdateLater = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnDialogUpdateLater)
+        val layoutProgress = view.findViewById<View>(R.id.layoutDialogDownloadProgress)
+        val pbDownload = view.findViewById<ProgressBar>(R.id.pbDialogDownload)
+        val tvProgressStatus = view.findViewById<TextView>(R.id.tvDialogProgressStatus)
+        val tvProgressPercent = view.findViewById<TextView>(R.id.tvDialogProgressPercent)
+        val tvProgressBytes = view.findViewById<TextView>(R.id.tvDialogProgressBytes)
+
+        tvDialogVersionPill?.text = "EMBER v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})"
+        tvDialogCurrentVersion?.text = "Currently Installed: v${updateInfo.currentVersionName} (Build ${updateInfo.currentVersionCode})"
+        tvDialogReleaseNotes?.text = updateInfo.releaseNotes
+
+        if (updateInfo.isForceUpdate) {
+            btnDialogUpdateLater?.visibility = View.GONE
+        } else {
+            btnDialogUpdateLater?.visibility = View.VISIBLE
+            btnDialogUpdateLater?.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                dialog.dismiss()
+            }
+        }
+
+        var downloadedApkFile: java.io.File? = null
+
+        val downloadListener: (EmberUpdateManager.DownloadState) -> Unit = { state ->
+            when (state) {
+                is EmberUpdateManager.DownloadState.Starting -> {
+                    layoutProgress?.visibility = View.VISIBLE
+                    pbDownload?.progress = 0
+                    tvProgressStatus?.text = "Starting download..."
+                    tvProgressPercent?.text = "0%"
+                    btnDialogUpdateNow?.isEnabled = false
+                    btnDialogUpdateNow?.text = "Downloading..."
+                }
+                is EmberUpdateManager.DownloadState.Progress -> {
+                    layoutProgress?.visibility = View.VISIBLE
+                    pbDownload?.progress = state.percent
+                    tvProgressPercent?.text = "${state.percent}%"
+                    val mbDownloaded = state.bytesDownloaded / (1024.0 * 1024.0)
+                    val mbTotal = state.totalBytes / (1024.0 * 1024.0)
+                    tvProgressBytes?.text = "${String.format("%.1f", mbDownloaded)} MB / ${String.format("%.1f", mbTotal)} MB"
+                }
+                is EmberUpdateManager.DownloadState.Completed -> {
+                    downloadedApkFile = state.apkFile
+                    layoutProgress?.visibility = View.VISIBLE
+                    pbDownload?.progress = 100
+                    tvProgressStatus?.text = "Download verified & ready"
+                    tvProgressPercent?.text = "100%"
+                    btnDialogUpdateNow?.isEnabled = true
+                    btnDialogUpdateNow?.text = "Install Update"
+                    EmberUpdateManager.installApk(this, state.apkFile)
+                }
+                is EmberUpdateManager.DownloadState.VerificationFailed -> {
+                    layoutProgress?.visibility = View.GONE
+                    btnDialogUpdateNow?.isEnabled = true
+                    btnDialogUpdateNow?.text = "Update Now"
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle("Security Verification Failed")
+                        .setMessage(state.reason)
+                        .setPositiveButton("Dismiss", null)
+                        .show()
+                }
+                is EmberUpdateManager.DownloadState.Failed -> {
+                    layoutProgress?.visibility = View.GONE
+                    btnDialogUpdateNow?.isEnabled = true
+                    btnDialogUpdateNow?.text = "Retry Update"
+                    Toast.makeText(this, state.reason, Toast.LENGTH_LONG).show()
+                }
+                else -> {}
+            }
+        }
+
+        EmberUpdateManager.addDownloadListener(downloadListener)
+        dialog.setOnDismissListener {
+            EmberUpdateManager.removeDownloadListener(downloadListener)
+        }
+
+        btnDialogUpdateNow?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            if (downloadedApkFile != null && downloadedApkFile!!.exists()) {
+                EmberUpdateManager.installApk(this, downloadedApkFile!!)
+            } else {
+                btnDialogUpdateNow.isEnabled = false
+                layoutProgress?.visibility = View.VISIBLE
+                EmberUpdateManager.startApkDownload(this, updateInfo, lifecycleScope)
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun triggerAppUpdateFlow(isManual: Boolean) {
+        if (isManual) {
+            Toast.makeText(this, "Checking for EMBER updates...", Toast.LENGTH_SHORT).show()
+        }
+        val tvMenuBadge = findViewById<TextView>(R.id.tvProfileMenuUpdateBadge)
+        tvMenuBadge?.text = "Checking for updates..."
+
+        lifecycleScope.launch {
+            when (val result = EmberUpdateManager.checkForUpdates(this@MainActivity)) {
+                is EmberUpdateManager.UpdateCheckResult.Available -> {
+                    tvMenuBadge?.text = "Update available: v${result.updateInfo.latestVersionName}!"
+                    tvMenuBadge?.setTextColor(Color.parseColor("#FF5A36"))
+                    showUpdateAvailableDialog(result.updateInfo)
+                }
+                is EmberUpdateManager.UpdateCheckResult.UpToDate -> {
+                    tvMenuBadge?.text = "v${result.updateInfo.currentVersionName} • Up to date"
+                    tvMenuBadge?.setTextColor(Color.parseColor("#34D399"))
+                    if (isManual) {
+                        Toast.makeText(this@MainActivity, "You're using the latest version of EMBER.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                is EmberUpdateManager.UpdateCheckResult.Error -> {
+                    tvMenuBadge?.text = "v${EmberUpdateManager.getCurrentVersionName(this@MainActivity)} • Error checking"
+                    tvMenuBadge?.setTextColor(Color.parseColor("#8E8E9B"))
+                    if (isManual) {
+                        Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 
     private fun openPrivacySecurityDialog() {
