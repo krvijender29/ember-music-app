@@ -411,19 +411,24 @@ object EmberAudioEngine {
 
         } else {
 
-            // Supplement with iTunes only if JioSaavn returned few results,
-
-            // but leave audioUrl empty so resolveAudioUrl dynamically resolves the full song!
-
-            val itunesTracks = searchItunes(cleanQ, limit = 10)
-
-            val merged = mutableListOf<Track>()
-
-            merged.addAll(saavnTracks)
-
-            merged.addAll(itunesTracks)
-
-            merged
+            // Supplement with YouTube Music Innertube songs
+            val ytTracks = try {
+                YouTubeMusicInnertubeEngine.searchSongs(cleanQ, count)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            if (ytTracks.isNotEmpty()) {
+                val merged = mutableListOf<Track>()
+                merged.addAll(saavnTracks)
+                merged.addAll(ytTracks)
+                merged
+            } else {
+                val itunesTracks = searchItunes(cleanQ, limit = 10)
+                val merged = mutableListOf<Track>()
+                merged.addAll(saavnTracks)
+                merged.addAll(itunesTracks)
+                merged
+            }
 
         }
 
@@ -873,7 +878,15 @@ object EmberAudioEngine {
 
         if (cleanQ.isBlank()) return@withContext emptyList()
 
-
+        // 1. Prioritize Zero-Quota YouTube Music native suggestions
+        try {
+            val ytSuggestions = YouTubeMusicInnertubeEngine.getSearchSuggestions(cleanQ)
+            if (ytSuggestions.isNotEmpty()) {
+                return@withContext ytSuggestions.take(8)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "YouTube Music suggestion fallback: ${e.message}")
+        }
 
         val suggestions = mutableListOf<String>()
 
@@ -1155,7 +1168,17 @@ object EmberAudioEngine {
 
         }
 
-
+        // 0. Direct YouTube Music audio stream if video ID is already known
+        val directVid = track.getResolvedVideoId()
+        if (!directVid.isNullOrBlank()) {
+            val stream = YouTubeMusicInnertubeEngine.resolveAudioStream(directVid)
+            if (stream.isNotBlank()) {
+                track.audioUrl = stream
+                track.isYoutubeFallback = true
+                Log.i(TAG, "Resolved direct YouTube Music audio stream for ${track.title} ($directVid)")
+                return@withContext stream
+            }
+        }
 
         // Primary Engine: JioSaavn direct 320kbps CDN search
 
@@ -1223,7 +1246,24 @@ object EmberAudioEngine {
 
 
 
-        // Secondary Engine: YouTube Audio Fallback for full track
+        // Secondary Engine: YouTube Music Innertube Zero-Quota Resolver
+        try {
+            val ytVid = YouTubeMusicInnertubeEngine.resolveTrackToVideoId(track.title, track.artist)
+            if (!ytVid.isNullOrBlank()) {
+                track.youtubeVideoId = ytVid
+                val stream = YouTubeMusicInnertubeEngine.resolveAudioStream(ytVid)
+                if (stream.isNotBlank()) {
+                    track.audioUrl = stream
+                    track.isYoutubeFallback = true
+                    Log.i(TAG, "Resolved YouTube Music audio stream via Innertube for ${track.title} ($ytVid)")
+                    return@withContext stream
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "YouTube Music Innertube resolution failed: ${e.message}")
+        }
+
+        // Tertiary Engine: YouTube Audio Fallback for full track
 
         Log.i(TAG, "Attempting YouTube fallback engine for ${track.title}...")
 

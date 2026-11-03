@@ -1,6 +1,7 @@
 package com.example.ember
 
 import com.example.ember.update.EmberUpdateManager
+import com.example.ember.engine.YouTubeMusicInnertubeEngine
 
 import com.example.ember.util.ThumbnailLoadingDrawable
 import com.example.ember.ui.EmberShimmerLayout
@@ -1757,17 +1758,7 @@ class MainActivity : AppCompatActivity() {
         allSongsAdapter = TrackAdapter(
 
             onTrackClick = { track, _ ->
-
-                val list = allSongsAdapter.getTracks()
-
-                playlistQueue.clear()
-
-                playlistQueue.addAll(list)
-
-                currentTrackIndex = playlistQueue.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-
-                playTrack(track)
-
+                onSearchResultTrackSelected(track)
             },
 
             onLikeClick = { track, _ -> handleLikeToggle(track) },
@@ -3940,15 +3931,7 @@ class MainActivity : AppCompatActivity() {
             showRank = false,
 
             onTrackClick = { track, _ ->
-
-                playlistQueue.clear()
-
-                playlistQueue.addAll(searchAdapter.getTracks())
-
-                currentTrackIndex = playlistQueue.indexOfFirst { it.id == track.id }
-
-                playTrack(track)
-
+                onSearchResultTrackSelected(track)
             },
 
             onLikeClick = { track, _ ->
@@ -5390,6 +5373,52 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    /**
+     * Search-to-Recommendation Queue Mechanism (Crucial UX Feature):
+     * 1. DO NOT add remaining search results into the queue.
+     * 2. DO NOT add random listening history into the queue.
+     * 3. IMMEDIATELY play the tapped song.
+     * 4. CONCURRENTLY call YouTube Music native /next recommendation endpoint (RDAMVM<videoId>).
+     * 5. Automatically populate "Up Next" queue with 20–25 acoustically matched songs from YouTube Music Automix.
+     */
+    private fun onSearchResultTrackSelected(selectedTrack: Track) {
+        playlistQueue.clear()
+        playlistQueue.add(selectedTrack)
+        currentTrackIndex = 0
+        playTrack(selectedTrack)
+        Toast.makeText(this, "Playing \"${selectedTrack.title}\"", Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val seedVideoId = selectedTrack.getResolvedVideoId()
+                    ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(selectedTrack.title, selectedTrack.artist)
+
+                if (!seedVideoId.isNullOrBlank()) {
+                    val recommendations = YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 25)
+                    val newTracks = recommendations.filter { it.id != selectedTrack.id }
+                    if (newTracks.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            val service = EmberPlaybackService.instance
+                            if (service != null && service.currentTrack?.id == selectedTrack.id) {
+                                service.addAllToQueue(newTracks)
+                            } else {
+                                val existingIds = playlistQueue.map { it.id }.toSet()
+                                playlistQueue.addAll(newTracks.filter { it.id !in existingIds })
+                            }
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Up next: YouTube Music Automix (${newTracks.size} tracks)",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Search Automix error: ${e.message}")
+            }
+        }
+    }
+
     private fun playTrack(track: Track) {
 
         currentTrack = track
@@ -6556,39 +6585,13 @@ class MainActivity : AppCompatActivity() {
                             }
 
                             cardTopMatchHero.setOnClickListener {
-
                                 it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-
-                                val songs = results.songs
-
-                                playlistQueue.clear()
-
-                                playlistQueue.add(top.track)
-
-                                playlistQueue.addAll(songs.filter { it.id != top.track.id })
-
-                                currentTrackIndex = 0
-
-                                playTrack(top.track)
-
+                                onSearchResultTrackSelected(top.track)
                             }
 
                             btnTopMatchAction.setOnClickListener {
-
                                 it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-
-                                val songs = results.songs
-
-                                playlistQueue.clear()
-
-                                playlistQueue.add(top.track)
-
-                                playlistQueue.addAll(songs.filter { it.id != top.track.id })
-
-                                currentTrackIndex = 0
-
-                                playTrack(top.track)
-
+                                onSearchResultTrackSelected(top.track)
                             }
 
                         }
@@ -8575,6 +8578,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
+        val optStartRadio = view.findViewById<View>(R.id.optStartRadio)
+
         val optPlayNext = view.findViewById<View>(R.id.optPlayNext)
 
         val optAddToQueue = view.findViewById<View>(R.id.optAddToQueue)
@@ -8642,6 +8647,13 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+
+        // 0. Start Song Radio (YouTube Music Automix)
+        optStartRadio?.setOnClickListener {
+            dialog.dismiss()
+            Toast.makeText(this, "📻 Starting YouTube Music Radio for ${track.title}...", Toast.LENGTH_SHORT).show()
+            onSearchResultTrackSelected(track)
+        }
 
         // 1. Play Next
 

@@ -103,6 +103,32 @@
             android:textSize="14sp" />
     </LinearLayout>
 
+    <!-- Start Song Radio (YouTube Music Automix) -->
+    <LinearLayout
+        android:id="@+id/optStartRadio"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_radio"
+            app:tint="@color/accent_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Start Song Radio"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
     <!-- 2. Add to Queue -->
     <LinearLayout
         android:id="@+id/optAddToQueue"

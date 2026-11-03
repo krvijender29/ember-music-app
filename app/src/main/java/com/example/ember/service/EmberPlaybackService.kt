@@ -35,6 +35,7 @@ import com.example.ember.MainActivity
 import com.example.ember.R
 import com.example.ember.data.EmberDatabaseManager
 import com.example.ember.engine.EmberAudioEngine
+import com.example.ember.engine.YouTubeMusicInnertubeEngine
 import com.example.ember.engine.EmberRecommendationEngine
 import com.example.ember.model.Track
 import kotlinx.coroutines.CoroutineScope
@@ -159,16 +160,25 @@ class EmberPlaybackService : MediaSessionService() {
                     if (player.hasNextMediaItem()) {
                         playNext()
                     } else {
-                        // Queue ended: dynamic continuous autoplay using smart recommendations
+                        // Queue ended: dynamic continuous autoplay using YouTube Music Automix
                         val track = currentTrack
                         if (track != null) {
                             serviceScope.launch(Dispatchers.IO) {
-                                val recs = EmberRecommendationEngine.getQueueRecommendations(
-                                    currentTrack = track,
-                                    excludeIds = playlistQueue.map { it.id }.toSet(),
-                                    count = 8,
-                                    dbManager = dbManager
-                                )
+                                val existingIds = playlistQueue.map { it.id }.toSet()
+                                val seedVideoId = track.getResolvedVideoId()
+                                    ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(track.title, track.artist)
+                                val ytRecs = if (!seedVideoId.isNullOrBlank()) {
+                                    YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 15)
+                                        .filter { it.id !in existingIds }
+                                } else emptyList()
+                                val recs = if (ytRecs.isNotEmpty()) ytRecs else {
+                                    EmberRecommendationEngine.getQueueRecommendations(
+                                        currentTrack = track,
+                                        excludeIds = existingIds,
+                                        count = 8,
+                                        dbManager = dbManager
+                                    )
+                                }
                                 withContext(Dispatchers.Main) {
                                     if (recs.isNotEmpty()) {
                                         val firstRec = recs.first()
@@ -402,6 +412,7 @@ class EmberPlaybackService : MediaSessionService() {
 
     /**
      * Automatically queries and appends recommended tracks when user approaches the end of queue
+     * Utilizes YouTube Music Automix AI Engine (/next) with seamless fallback
      */
     private fun checkAndAppendQueueRecommendations(track: Track) {
         if (isAutoRecommending) return
@@ -411,12 +422,25 @@ class EmberPlaybackService : MediaSessionService() {
             serviceScope.launch(Dispatchers.IO) {
                 try {
                     val existingIds = playlistQueue.map { it.id }.toSet()
-                    val recommendations = EmberRecommendationEngine.getQueueRecommendations(
-                        currentTrack = track,
-                        excludeIds = existingIds,
-                        count = 8,
-                        dbManager = dbManager
-                    )
+                    val seedVideoId = track.getResolvedVideoId()
+                        ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(track.title, track.artist)
+
+                    val ytRecs = if (!seedVideoId.isNullOrBlank()) {
+                        YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 15)
+                            .filter { it.id !in existingIds }
+                    } else emptyList()
+
+                    val recommendations = if (ytRecs.isNotEmpty()) {
+                        Log.i(TAG, "Queue Autoplay: Fetched ${ytRecs.size} YouTube Music Automix recommendations for ${track.title}")
+                        ytRecs
+                    } else {
+                        EmberRecommendationEngine.getQueueRecommendations(
+                            currentTrack = track,
+                            excludeIds = existingIds,
+                            count = 10,
+                            dbManager = dbManager
+                        )
+                    }
                     if (recommendations.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
                             val newTracks = recommendations.filter { rec -> playlistQueue.none { it.id == rec.id } }
