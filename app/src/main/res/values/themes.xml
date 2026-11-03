@@ -134,15 +134,20 @@
     </style>
 
     <style name="Widget.Ember.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/Widget.Ember.BottomSheet</item>
+        <item name="bottomSheetStyle">@style/Widget.Ember.TransparentBottomSheet</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
     </style>
 
     <style name="Widget.Ember.BottomSheet" parent="Widget.MaterialComponents.BottomSheet">
-        <item name="android:background">@drawable/dialog_sheet_bg</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
     </style>
 
     <style name="Theme.Ember.TransparentBottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.Ember.TransparentBottomSheet</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
     </style>
 
     <style name="Widget.Ember.TransparentBottomSheet" parent="Widget.MaterialComponents.BottomSheet">

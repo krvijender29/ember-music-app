@@ -3639,6 +3639,12 @@ class MainActivity : AppCompatActivity() {
 
         animateTabBounce(selectedIcon)
 
+        if (tabIndex == 3) {
+            tabProfileView.post {
+                tabProfileView.scrollTo(0, 0)
+            }
+            refreshProfileUI()
+        }
     }
 
 
@@ -6801,7 +6807,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSpotifyImportDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_import_spotify, null)
 
@@ -8070,7 +8076,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openCreatePlaylistDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_edit_playlist, null)
 
@@ -8126,7 +8132,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openPlaylistOptionsDialog(playlist: Playlist) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_collection_options, null)
 
@@ -8282,7 +8288,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openAlbumOptionsDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_collection_options, null)
 
@@ -8428,7 +8434,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openRenamePlaylistDialog(playlist: Playlist) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_edit_playlist, null)
 
@@ -8500,7 +8506,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openDeletePlaylistConfirmDialog(playlist: Playlist, onDeleted: (() -> Unit)? = null) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_confirm_delete, null)
 
@@ -8552,7 +8558,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSongOptionsDialog(track: Track) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_song_options, null)
 
@@ -8826,7 +8832,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSongInfoDialog(track: Track) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_audio_quality_info, null)
 
@@ -8874,7 +8880,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSelectPlaylistDialog(track: Track) {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_select_playlist, null)
 
@@ -9400,7 +9406,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openLyricsDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_lyrics, null)
 
@@ -9844,7 +9850,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openSleepTimerDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_sleep_timer, null)
 
@@ -10020,7 +10026,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openQueueDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_queue, null)
 
@@ -10879,10 +10885,21 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun BottomSheetDialog.applyEmberTheme() {
+        window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+        setOnShowListener {
+            findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.let { sheet ->
+                sheet.setBackgroundColor(Color.TRANSPARENT)
+                sheet.background = null
+            }
+        }
+    }
+
     private fun openAppSettingsBottomSheet() {
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
         val view = layoutInflater.inflate(R.layout.dialog_profile_settings, null)
         dialog.setContentView(view)
+        dialog.applyEmberTheme()
 
         val btnClose = view.findViewById<View>(R.id.btnCloseSettings)
         btnClose?.setOnClickListener { dialog.dismiss() }
@@ -11100,9 +11117,10 @@ class MainActivity : AppCompatActivity() {
 
     
     private fun showUpdateAvailableDialog(updateInfo: EmberUpdateManager.UpdateInfo) {
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
         val view = layoutInflater.inflate(R.layout.dialog_update_available, null)
         dialog.setContentView(view)
+        dialog.applyEmberTheme()
 
         if (updateInfo.isForceUpdate) {
             dialog.setCancelable(false)
@@ -11241,30 +11259,53 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openPrivacySecurityDialog() {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Privacy & Security")
-            .setMessage("• Zero Third-Party Audio Tracking: Your listening habits are never monetized or sold.\n\n• End-to-End Encrypted Cloud Sync: All synchronized playlists and preferences are securely encrypted with Firebase Auth.\n\n• Device-Only Offline Cache: Audio streams cached offline stay securely sandboxed on your local phone storage.")
-            .setPositiveButton("Got It", null)
-            .show()
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
+        val view = layoutInflater.inflate(R.layout.dialog_privacy_security, null)
+        dialog.setContentView(view)
+        dialog.applyEmberTheme()
+
+        view.findViewById<View>(R.id.btnClosePrivacy)?.setOnClickListener {
+            dialog.dismiss()
+        }
+        view.findViewById<View>(R.id.btnGotItPrivacy)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     private fun openHelpSupportDialog() {
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Help & Support")
-            .setMessage("EMBER Music v2.4 (Studio Fidelity Edition)\n\n• Lossless Audio Streaming Engine\n• 5-Band Dynamic EQ & Headphone Calibration\n• Smart Hybrid Recommendation Engine\n\nNeed help or want to request a feature?\nContact Developer: svijender130@gmail.com")
-            .setPositiveButton("Close", null)
-            .setNeutralButton("Send Feedback") { _, _ ->
-                try {
-                    val intent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = android.net.Uri.parse("mailto:svijender130@gmail.com")
-                        putExtra(Intent.EXTRA_SUBJECT, "EMBER Music Feedback & Support")
-                    }
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Email client not found", Toast.LENGTH_SHORT).show()
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
+        val view = layoutInflater.inflate(R.layout.dialog_help_support, null)
+        dialog.setContentView(view)
+        dialog.applyEmberTheme()
+
+        val tvEdition = view.findViewById<TextView>(R.id.tvHelpAppEdition)
+        tvEdition?.text = "EMBER Music • v${EmberUpdateManager.getCurrentVersionName(this)} Studio Fidelity"
+
+        view.findViewById<View>(R.id.btnCloseHelp)?.setOnClickListener {
+            dialog.dismiss()
+        }
+        view.findViewById<View>(R.id.btnCloseHelpDialog)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            dialog.dismiss()
+        }
+        view.findViewById<View>(R.id.btnSendFeedback)?.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            dialog.dismiss()
+            try {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = android.net.Uri.parse("mailto:svijender130@gmail.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "EMBER Music v${EmberUpdateManager.getCurrentVersionName(this@MainActivity)} Feedback & Support")
                 }
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Email client not found. Contact: svijender130@gmail.com", Toast.LENGTH_LONG).show()
             }
-            .show()
+        }
+
+        dialog.show()
     }
 
     private fun showNotificationsBottomSheet() {
@@ -11288,11 +11329,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun openEditProfileDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
 
         val view = layoutInflater.inflate(R.layout.dialog_edit_profile, null)
 
         dialog.setContentView(view)
+
+        dialog.applyEmberTheme()
 
 
 
@@ -11372,11 +11415,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun openPreferencesDialog() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog)
 
         val view = layoutInflater.inflate(R.layout.dialog_preferences, null)
 
         dialog.setContentView(view)
+
+        dialog.applyEmberTheme()
 
 
 
@@ -11542,21 +11587,69 @@ class MainActivity : AppCompatActivity() {
 
         val (playlistsCount, likedCount, historyCount) = dbManager.getStats()
 
-        val displayLikes = likedCount.coerceAtLeast(247)
-        val displayPlaylists = playlistsCount.coerceAtLeast(12)
-        val displayHours = 48
+        tvStatPlaylists.text = playlistsCount.toString()
+        tvStatLikes.text = likedCount.toString()
 
-        tvStatPlaylists.text = displayPlaylists.toString()
-        tvStatLikes.text = displayLikes.toString()
-        tvStatHistory.text = "${displayHours}h+"
+        val estimatedMinutes = historyCount * 3.5
+        val hours = (estimatedMinutes / 60.0).toInt()
+        val hoursDisplay = if (hours > 0) "${hours}h+" else if (historyCount > 0) "${estimatedMinutes.toInt()}m" else "0h"
+        tvStatHistory.text = hoursDisplay
 
-        findViewById<TextView>(R.id.tvProfileLikedSubtitle)?.text = "$displayLikes Songs"
+        findViewById<TextView>(R.id.tvProfileLikedSubtitle)?.text = "$likedCount Songs"
 
-        val activitySongs = 542
-        val activityHours = 162
-        findViewById<TextView>(R.id.tvActivitySongsCount)?.text = activitySongs.toString()
-        findViewById<TextView>(R.id.tvActivityTotalHours)?.text = "${activityHours}h+"
-        findViewById<TextView>(R.id.tvActivityTopPercent)?.text = "Top 1%"
+        // Dynamic binding for My Playlists section in Profile
+        val userPlaylists = dbManager.getPlaylists()
+        val tvChillTitle = findViewById<TextView>(R.id.tvProfileChillTitle)
+        val tvChillSubtitle = findViewById<TextView>(R.id.tvProfileChillSubtitle)
+        val tvWorkoutTitle = findViewById<TextView>(R.id.tvProfileWorkoutTitle)
+        val tvWorkoutSubtitle = findViewById<TextView>(R.id.tvProfileWorkoutSubtitle)
+
+        if (userPlaylists.isNotEmpty()) {
+            val pl1 = userPlaylists[0]
+            tvChillTitle?.text = pl1.name
+            tvChillSubtitle?.text = "${pl1.tracks.size} Songs"
+            findViewById<View>(R.id.cardProfileChillVibes)?.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                openPlaylistView(pl1)
+            }
+        } else {
+            tvChillTitle?.text = "Chill Vibes"
+            tvChillSubtitle?.text = "Curated Mix"
+            findViewById<View>(R.id.cardProfileChillVibes)?.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                switchTab(1)
+                executeSearch("Lo-Fi Chill")
+            }
+        }
+
+        if (userPlaylists.size > 1) {
+            val pl2 = userPlaylists[1]
+            tvWorkoutTitle?.text = pl2.name
+            tvWorkoutSubtitle?.text = "${pl2.tracks.size} Songs"
+            findViewById<View>(R.id.cardProfileWorkout)?.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                openPlaylistView(pl2)
+            }
+        } else {
+            tvWorkoutTitle?.text = "+ New Playlist"
+            tvWorkoutSubtitle?.text = "Custom Mix"
+            findViewById<View>(R.id.cardProfileWorkout)?.setOnClickListener {
+                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                openCreatePlaylistDialog()
+            }
+        }
+
+        findViewById<TextView>(R.id.tvActivitySongsCount)?.text = historyCount.toString()
+        findViewById<TextView>(R.id.tvActivityTotalHours)?.text = hoursDisplay
+        val topPercent = when {
+            historyCount >= 20 -> "Top 1%"
+            historyCount >= 10 -> "Top 5%"
+            historyCount > 0 -> "Rising"
+            else -> "Explorer"
+        }
+        findViewById<TextView>(R.id.tvActivityTopPercent)?.text = topPercent
+
+        findViewById<TextView>(R.id.tvProfileFooterEdition)?.text = "EMBER Music • v${EmberUpdateManager.getCurrentVersionName(this)} Studio"
 
         val savedPersona = getSharedPreferences("ember_profile_prefs", MODE_PRIVATE)
             .getString("sound_persona", null)
@@ -11837,7 +11930,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openEmailAuthDrawer() {
 
-        val dialog = BottomSheetDialog(this)
+        val dialog = BottomSheetDialog(this, R.style.Theme_Ember_TransparentBottomSheetDialog).apply { applyEmberTheme() }
 
         val view = layoutInflater.inflate(R.layout.dialog_email_auth_sheet, null)
 

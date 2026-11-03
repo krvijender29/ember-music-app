@@ -4874,11 +4874,17 @@
                 android:background="#0A090D"
                 android:clipToPadding="false"
                 android:overScrollMode="never"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:descendantFocusability="beforeDescendants"
                 android:visibility="gone">
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:descendantFocusability="beforeDescendants">
 
                     <!-- Luminous Ambient Background Glow radiating behind Header & VIP Identity -->
                     <View
@@ -6001,6 +6007,38 @@
                                 </RelativeLayout>
                             </LinearLayout>
 
+                            <!-- Creator Credit & Studio Edition below Log Out -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="26dp"
+                                android:layout_marginBottom="14dp"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvProfileMadeBy"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="sans-serif-black"
+                                    android:letterSpacing="0.04"
+                                    android:text="Made by Vijender Singh"
+                                    android:textColor="#FF9D5C"
+                                    android:textSize="13.5sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/tvProfileFooterEdition"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="4dp"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:letterSpacing="0.05"
+                                    android:text="EMBER Music • v2.4.1 Studio"
+                                    android:textColor="#666675"
+                                    android:textSize="11.5sp" />
+                            </LinearLayout>
+
                             <!-- Hidden Stub Container for 100% Backward Compatibility with MainActivity references -->
                             <LinearLayout
                                 android:layout_width="0dp"
@@ -6211,33 +6249,10 @@
                             </LinearLayout>
                         </LinearLayout>
 
-                        <!-- ========================================================= -->
-                        <!-- 8. FOOTER BRANDING                                        -->
-                        <!-- ========================================================= -->
-                        <LinearLayout
+                        <!-- Section 8 spacer -->
+                        <View
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="32dp"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif-medium"
-                                android:letterSpacing="0.06"
-                                android:text="EMBER Music • v2.4.0 Studio"
-                                android:textColor="#52525E"
-                                android:textSize="12sp" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="Made with ❤️ for audiophiles everywhere"
-                                android:textColor="#3D3D48"
-                                android:textSize="11sp" />
-                        </LinearLayout>
+                            android:layout_height="24dp" />
                     </LinearLayout>
                 </FrameLayout>
             </androidx.core.widget.NestedScrollView>
