@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.ember"
         minSdk = 24
         targetSdk = 37
-        versionCode = 7
-        versionName = "2.4.5"
+        versionCode = 8
+        versionName = "2.4.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

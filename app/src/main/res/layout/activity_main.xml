@@ -5781,7 +5781,7 @@
                                             android:id="@+id/tvProfileMenuUpdateBadge"
                                             android:layout_width="wrap_content"
                                             android:layout_height="wrap_content"
-                                            android:text="Version 2.4.5 • Tap to check"
+                                            android:text="Version 2.4.6 • Tap to check"
                                             android:textColor="#8E8E9B"
                                             android:textSize="11.5sp" />
                                     </LinearLayout>
@@ -5961,7 +5961,7 @@
                                     android:layout_marginTop="4dp"
                                     android:fontFamily="sans-serif-medium"
                                     android:letterSpacing="0.05"
-                                    android:text="EMBER Music • v2.4.5 Studio"
+                                    android:text="EMBER Music • v2.4.6 Studio"
                                     android:textColor="#666675"
                                     android:textSize="11.5sp" />
                             </LinearLayout>

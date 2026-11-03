@@ -422,7 +422,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-medium"
-                        android:text="EMBER v2.4.5 (Build 7)"
+                        android:text="EMBER v2.4.6 (Build 8)"
                         android:textColor="@color/white"
                         android:textSize="14.5sp" />
 
@@ -473,7 +473,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-bold"
-                    android:text="New Version Available: v2.4.5"
+                    android:text="New Version Available: v2.4.6"
                     android:textColor="@color/white"
                     android:textSize="13sp" />
 
