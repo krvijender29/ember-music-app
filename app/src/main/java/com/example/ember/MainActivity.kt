@@ -3697,19 +3697,7 @@ class MainActivity : AppCompatActivity() {
         // Section 1: Jump Back In
 
         jumpBackInAdapter = HorizontalCardAdapter(showRank = false) { track, _ ->
-
-            val list = jumpBackInAdapter.getTracks()
-
-            playlistQueue.clear()
-
-            playlistQueue.add(track)
-
-            playlistQueue.addAll(list.filter { it.id != track.id })
-
-            currentTrackIndex = 0
-
-            playTrack(track)
-
+            onSearchResultTrackSelected(track)
         }
 
         rvJumpBackIn.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -3721,19 +3709,7 @@ class MainActivity : AppCompatActivity() {
         // Auto-Recommendation: Recommended For You
 
         recommendedForYouAdapter = HorizontalCardAdapter(showRank = false) { track, _ ->
-
-            val list = recommendedForYouAdapter.getTracks()
-
-            playlistQueue.clear()
-
-            playlistQueue.add(track)
-
-            playlistQueue.addAll(list.filter { it.id != track.id })
-
-            currentTrackIndex = 0
-
-            playTrack(track)
-
+            onSearchResultTrackSelected(track)
         }
 
         rvRecommendedForYou.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -3745,19 +3721,7 @@ class MainActivity : AppCompatActivity() {
         // Section 2: Global Top Charts (Ranked #1, #2...)
 
         chartsCardsAdapter = HorizontalCardAdapter(showRank = true) { track, _ ->
-
-            val list = chartsCardsAdapter.getTracks()
-
-            playlistQueue.clear()
-
-            playlistQueue.add(track)
-
-            playlistQueue.addAll(list.filter { it.id != track.id })
-
-            currentTrackIndex = 0
-
-            playTrack(track)
-
+            onSearchResultTrackSelected(track)
         }
 
         rvChartsCards.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -3773,19 +3737,7 @@ class MainActivity : AppCompatActivity() {
             showRank = false,
 
             onTrackClick = { track, _ ->
-
-                val list = moreFromArtistAdapter.getTracks()
-
-                playlistQueue.clear()
-
-                playlistQueue.add(track)
-
-                playlistQueue.addAll(list.filter { it.id != track.id })
-
-                currentTrackIndex = 0
-
-                playTrack(track)
-
+                onSearchResultTrackSelected(track)
             },
 
             onLikeClick = { track, _ ->
@@ -3819,19 +3771,7 @@ class MainActivity : AppCompatActivity() {
             showRank = false,
 
             onTrackClick = { track, _ ->
-
-                val list = basedOnTasteAdapter.getTracks()
-
-                playlistQueue.clear()
-
-                playlistQueue.add(track)
-
-                playlistQueue.addAll(list.filter { it.id != track.id })
-
-                currentTrackIndex = 0
-
-                playTrack(track)
-
+                onSearchResultTrackSelected(track)
             },
 
             onLikeClick = { track, _ ->
@@ -3861,19 +3801,7 @@ class MainActivity : AppCompatActivity() {
         // Auto-Recommendation: Discover Something New
 
         discoverNewAdapter = HorizontalCardAdapter(showRank = false) { track, _ ->
-
-            val list = discoverNewAdapter.getTracks()
-
-            playlistQueue.clear()
-
-            playlistQueue.add(track)
-
-            playlistQueue.addAll(list.filter { it.id != track.id })
-
-            currentTrackIndex = 0
-
-            playTrack(track)
-
+            onSearchResultTrackSelected(track)
         }
 
         rvDiscoverNew.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -3885,19 +3813,7 @@ class MainActivity : AppCompatActivity() {
         // Auto-Recommendation: Mood Mix
 
         moodMixAdapter = HorizontalCardAdapter(showRank = false) { track, _ ->
-
-            val list = moodMixAdapter.getTracks()
-
-            playlistQueue.clear()
-
-            playlistQueue.add(track)
-
-            playlistQueue.addAll(list.filter { it.id != track.id })
-
-            currentTrackIndex = 0
-
-            playTrack(track)
-
+            onSearchResultTrackSelected(track)
         }
 
         rvMoodMix.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)

@@ -540,6 +540,47 @@ class EmberPlaybackService : MediaSessionService() {
         } else {
             loadExoPlayerPlaylist(currentTrackIndex)
         }
+
+        // Concurrently fetch YouTube Music /next Automix recommendations for Up Next queue
+        fetchYouTubeNextRecommendations(targetTrack)
+    }
+
+    private var automixFetchJob: Job? = null
+
+    /**
+     * Concurrently calls YouTube Music native /next Automix endpoint (RDAMVM<seedVideoId>)
+     * and automatically populates the 'Up Next' queue with 20–25 acoustically matched tracks.
+     */
+    private fun fetchYouTubeNextRecommendations(track: Track) {
+        automixFetchJob?.cancel()
+        automixFetchJob = serviceScope.launch(Dispatchers.IO) {
+            try {
+                val seedVideoId = track.getResolvedVideoId()
+                    ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(track.title, track.artist)
+
+                if (!seedVideoId.isNullOrBlank()) {
+                    val recs = YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 25)
+                    if (recs.isNotEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            if (currentTrack?.id == track.id) {
+                                val existingIds = playlistQueue.map { it.id }.toSet()
+                                val newTracks = recs.filter { it.id !in existingIds }
+                                if (newTracks.isNotEmpty()) {
+                                    playlistQueue.addAll(newTracks)
+                                    newTracks.forEach { player.addMediaItem(buildMediaItem(it)) }
+                                    listeners.forEach { it.onQueueChanged() }
+                                    saveCurrentPlaybackState()
+                                    preResolveNextTrack(currentTrackIndex + 1)
+                                    Log.i(TAG, "YouTube Music /next: Added ${newTracks.size} Automix tracks to Up Next queue for ${track.title}")
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error fetching YouTube /next recommendations: ${e.message}")
+            }
+        }
     }
 
     /**

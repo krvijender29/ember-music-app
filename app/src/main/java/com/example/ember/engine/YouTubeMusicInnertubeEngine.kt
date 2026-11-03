@@ -334,6 +334,62 @@ object YouTubeMusicInnertubeEngine {
         }
     }
 
+    suspend fun searchAlbums(query: String, limit: Int = 20): List<AlbumItem> = withContext(Dispatchers.IO) {
+        val cleanQuery = query.trim()
+        if (cleanQuery.isBlank()) return@withContext emptyList()
+
+        try {
+            val json = JSONObject().apply {
+                put("context", buildClientContext())
+                put("query", cleanQuery)
+                put("params", FILTER_ALBUMS)
+            }
+            val req = createBaseRequestBuilder("search", json).build()
+            val res = client.newCall(req).execute()
+            val body = res.body?.string() ?: return@withContext emptyList()
+
+            val items = parseSectionItems(JSONObject(body))
+            val list = mutableListOf<AlbumItem>()
+            for (i in 0 until items.length()) {
+                if (list.size >= limit) break
+                val obj = items.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
+                parseAlbumItem(obj)?.let { list.add(it) }
+            }
+            return@withContext list
+        } catch (e: Exception) {
+            Log.e(TAG, "Search albums error: ${e.message}")
+            return@withContext emptyList()
+        }
+    }
+
+    suspend fun searchPlaylists(query: String, limit: Int = 20): List<PlaylistItem> = withContext(Dispatchers.IO) {
+        val cleanQuery = query.trim()
+        if (cleanQuery.isBlank()) return@withContext emptyList()
+
+        try {
+            val json = JSONObject().apply {
+                put("context", buildClientContext())
+                put("query", cleanQuery)
+                put("params", FILTER_PLAYLISTS)
+            }
+            val req = createBaseRequestBuilder("search", json).build()
+            val res = client.newCall(req).execute()
+            val body = res.body?.string() ?: return@withContext emptyList()
+
+            val items = parseSectionItems(JSONObject(body))
+            val list = mutableListOf<PlaylistItem>()
+            for (i in 0 until items.length()) {
+                if (list.size >= limit) break
+                val obj = items.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
+                parsePlaylistItem(obj)?.let { list.add(it) }
+            }
+            return@withContext list
+        } catch (e: Exception) {
+            Log.e(TAG, "Search playlists error: ${e.message}")
+            return@withContext emptyList()
+        }
+    }
+
     // =========================================================================
     // 3. AI Recommendations / Automix Radio ("Up Next")
     // =========================================================================
@@ -532,62 +588,50 @@ object YouTubeMusicInnertubeEngine {
      * Uses fast proxy instances with instant failover.
      */
     suspend fun resolveAudioStream(videoId: String): String = withContext(Dispatchers.IO) {
-        if (videoId.isBlank()) return@withContext ""
+        val cleanVid = videoId.trim()
+        if (cleanVid.isBlank()) return@withContext ""
 
-        val cacheKey = "stream:$videoId"
+        val cacheKey = "stream:$cleanVid"
         getCached(cacheKey)?.let {
             return@withContext it as String
         }
 
-        val streamServers = listOf(
-            "https://api.piped.private.coffee/streams/$videoId",
-            "https://pipedapi.kavin.rocks/streams/$videoId",
-            "https://pipedapi.adminforge.de/streams/$videoId",
-            "https://invidious.nerdvpn.de/api/v1/videos/$videoId"
-        )
-
-        for (endpoint in streamServers) {
-            try {
-                val req = Request.Builder()
-                    .url(endpoint)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                    .build()
-                val res = client.newCall(req).execute()
-                val body = res.body?.string() ?: continue
-                val json = JSONObject(body)
-
-                // 1. Try Piped audioStreams
-                val audioStreams = json.optJSONArray("audioStreams")
-                if (audioStreams != null && audioStreams.length() > 0) {
-                    var bestUrl = ""
-                    var maxBitrate = 0
-                    for (i in 0 until audioStreams.length()) {
-                        val stream = audioStreams.getJSONObject(i)
-                        val bitrate = stream.optInt("bitrate", 0)
-                        val url = stream.optString("url", "")
-                        if (url.isNotBlank() && bitrate >= maxBitrate) {
-                            maxBitrate = bitrate
-                            bestUrl = url
-                        }
-                    }
-                    if (bestUrl.isNotBlank()) {
-                        putCache(cacheKey, bestUrl)
-                        Log.i(TAG, "Resolved audio stream from Piped: $videoId (${maxBitrate / 1000} kbps)")
-                        return@withContext bestUrl
-                    }
+        // Direct Ultra-Fast YouTube Innertube Player Resolution (<300ms)
+        try {
+            val json = JSONObject().apply {
+                val clientObj = JSONObject().apply {
+                    put("clientName", "ANDROID")
+                    put("clientVersion", "20.10.38")
+                    put("androidSdkVersion", 34)
+                    put("hl", "en")
+                    put("gl", "US")
                 }
+                put("context", JSONObject().apply { put("client", clientObj) })
+                put("videoId", cleanVid)
+            }
+            val body = json.toString().toRequestBody(JSON_MEDIA_TYPE)
+            val req = Request.Builder()
+                .url("https://www.youtube.com/youtubei/v1/player")
+                .header("User-Agent", "com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip")
+                .header("Content-Type", "application/json")
+                .post(body)
+                .build()
 
-                // 2. Try Invidious adaptiveFormats
-                val adaptiveFormats = json.optJSONArray("adaptiveFormats")
+            val res = client.newCall(req).execute()
+            val resBody = res.body?.string() ?: ""
+            if (resBody.isNotBlank()) {
+                val root = JSONObject(resBody)
+                val streamingData = root.optJSONObject("streamingData")
+                val adaptiveFormats = streamingData?.optJSONArray("adaptiveFormats")
                 if (adaptiveFormats != null && adaptiveFormats.length() > 0) {
                     var bestUrl = ""
                     var maxBitrate = 0
                     for (i in 0 until adaptiveFormats.length()) {
                         val format = adaptiveFormats.getJSONObject(i)
-                        val type = format.optString("type", "")
-                        if (type.contains("audio", ignoreCase = true)) {
-                            val bitrate = format.optInt("bitrate", 0)
+                        val mimeType = format.optString("mimeType", "")
+                        if (mimeType.contains("audio", ignoreCase = true)) {
                             val url = format.optString("url", "")
+                            val bitrate = format.optInt("bitrate", 0)
                             if (url.isNotBlank() && bitrate >= maxBitrate) {
                                 maxBitrate = bitrate
                                 bestUrl = url
@@ -596,13 +640,13 @@ object YouTubeMusicInnertubeEngine {
                     }
                     if (bestUrl.isNotBlank()) {
                         putCache(cacheKey, bestUrl)
-                        Log.i(TAG, "Resolved audio stream from Invidious: $videoId (${maxBitrate / 1000} kbps)")
+                        Log.i(TAG, "Ultra-fast direct YouTube audio stream: $cleanVid (${maxBitrate / 1000} kbps)")
                         return@withContext bestUrl
                     }
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Stream resolution error at $endpoint: ${e.message}")
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Direct YouTube stream resolution error for $cleanVid: ${e.message}")
         }
 
         return@withContext ""
