@@ -4867,131 +4867,36 @@
                         <!-- ========================================================= -->
             <!-- 4. PROFILE & PREFERENCES TAB (PINNED HEADER ARCHITECTURE)   -->
             <!-- ========================================================= -->
-            <LinearLayout
+            <FrameLayout
                 android:id="@+id/tabProfileView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#0A090D"
-                android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- 1. Pinned Top Header: EMBER brand logo + mark, Notification Bell & Settings Cog -->
-                <LinearLayout
-                    android:id="@+id/profileTopHeader"
+                <!-- 1. Luminous Ambient Background Glow radiating from top right across Header & VIP Identity -->
+                <View
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="#0A090D"
-                    android:paddingStart="20dp"
-                    android:paddingTop="68dp"
-                    android:paddingEnd="20dp"
-                    android:paddingBottom="12dp">
+                    android:layout_height="480dp"
+                    android:background="@drawable/profile_ambient_glow" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="sans-serif-black"
-                                android:includeFontPadding="false"
-                                android:letterSpacing="0.08"
-                                android:text="@string/header_ember_logo"
-                                android:textColor="@color/white"
-                                android:textSize="24sp"
-                                android:textStyle="bold" />
-
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="14dp"
-                                android:layout_marginStart="8dp"
-                                android:src="@drawable/ic_ember_waveform_mark"
-                                android:contentDescription="EMBER Logo Mark" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="3dp"
-                            android:fontFamily="sans-serif-medium"
-                            android:includeFontPadding="false"
-                            android:letterSpacing="0.16"
-                            android:text="AUDIOPHILE PROFILE"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="9sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Right Actions: Bell + Settings -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <!-- Notification Bell -->
-                        <ImageView
-                            android:id="@+id/btnProfileBell"
-                            android:layout_width="38dp"
-                            android:layout_height="38dp"
-                            android:background="@drawable/circle_dark_action_bg"
-                            android:clickable="true"
-                            android:focusable="false"
-                            android:padding="8.5dp"
-                            android:src="@drawable/ic_bell"
-                            app:tint="@color/white" />
-
-                        <!-- Settings Cog -->
-                        <ImageView
-                            android:id="@+id/btnProfileHeaderSettings"
-                            android:layout_width="38dp"
-                            android:layout_height="38dp"
-                            android:layout_marginStart="10dp"
-                            android:background="@drawable/circle_dark_action_bg"
-                            android:clickable="true"
-                            android:focusable="false"
-                            android:padding="8.5dp"
-                            android:src="@drawable/ic_settings"
-                            app:tint="@color/white" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <!-- 2. Scrollable Body (Blocks child focus stealing so it NEVER auto-scrolls) -->
+                <!-- 2. Scrollable Body -->
                 <androidx.core.widget.NestedScrollView
                     android:id="@+id/profileScrollView"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="match_parent"
                     android:clipToPadding="false"
+                    android:paddingTop="118dp"
+                    android:paddingBottom="96dp"
                     android:overScrollMode="never"
                     android:descendantFocusability="blocksDescendants">
 
-                    <FrameLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <!-- Luminous Ambient Background Glow radiating behind VIP Identity -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="320dp"
-                            android:background="@drawable/profile_ambient_glow" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:paddingTop="6dp"
-                            android:paddingBottom="130dp">
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="130dp">
 
                         <!-- ========================================================= -->
                         <!-- 2. LOGGED IN USER PROFILE (SPOTIFY/JIOSAAVN VIP PASS)    -->
@@ -6276,9 +6181,99 @@
                             android:layout_width="match_parent"
                             android:layout_height="24dp" />
                     </LinearLayout>
-                </FrameLayout>
             </androidx.core.widget.NestedScrollView>
-        </LinearLayout>
+
+                <!-- 3. Top Header: Pinned at top, transparent by default so ambient glow shines through seamlessly -->
+                <LinearLayout
+                    android:id="@+id/profileTopHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@android:color/transparent"
+                    android:paddingStart="20dp"
+                    android:paddingTop="68dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:id="@+id/tvProfileHeaderLogo"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false"
+                                android:letterSpacing="0.08"
+                                android:text="@string/header_ember_logo"
+                                android:textColor="@color/white"
+                                android:textSize="24sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="14dp"
+                                android:layout_marginStart="8dp"
+                                android:src="@drawable/ic_ember_waveform_mark"
+                                android:contentDescription="EMBER Logo Mark" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvProfileHeaderTagline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="3dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="0.16"
+                            android:text="MUSIC FOR EVERY MOOD"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="9sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:id="@+id/btnProfileBell"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:layout_marginEnd="10dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_bell"
+                            app:tint="@color/text_secondary" />
+
+                        <ImageView
+                            android:id="@+id/btnProfileHeaderSettings"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:padding="8.5dp"
+                            android:src="@drawable/ic_settings"
+                            app:tint="@color/text_secondary" />
+
+                    </LinearLayout>
+                </LinearLayout>
+        </FrameLayout>
 
         </FrameLayout>
 

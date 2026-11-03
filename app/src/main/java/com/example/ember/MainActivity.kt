@@ -709,7 +709,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var btnSignOut: View
 
-    private lateinit var btnProfileHeaderSettings: ImageView
+    private var btnProfileHeaderSettings: View? = null
 
 
 
@@ -4780,6 +4780,7 @@ class MainActivity : AppCompatActivity() {
 
         tvHeaderAppLogo.text = createSpannable()
         findViewById<TextView>(R.id.tvSkeletonHeaderLogo)?.text = createSpannable()
+        findViewById<TextView>(R.id.tvProfileHeaderLogo)?.text = createSpannable()
 
     }
 
@@ -10659,9 +10660,18 @@ class MainActivity : AppCompatActivity() {
             showNotificationsBottomSheet()
         }
 
-        btnProfileHeaderSettings.setOnClickListener {
+        btnProfileHeaderSettings?.setOnClickListener {
             it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             openAppSettingsBottomSheet()
+        }
+
+        val profileScrollView = findViewById<androidx.core.widget.NestedScrollView>(R.id.profileScrollView)
+        val profileTopHeader = findViewById<View>(R.id.profileTopHeader)
+
+        profileScrollView?.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            val ratio = (scrollY / 120f).coerceIn(0f, 1f)
+            val alpha = (ratio * 255).toInt()
+            profileTopHeader?.setBackgroundColor(Color.argb(alpha, 10, 9, 13))
         }
 
         findViewById<View>(R.id.btnAvatarCamera)?.setOnClickListener {
