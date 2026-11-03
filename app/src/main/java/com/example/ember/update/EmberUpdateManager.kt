@@ -132,10 +132,10 @@ object EmberUpdateManager {
     fun getCurrentVersionName(context: Context): String {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName ?: "2.4.0"
+            packageInfo.versionName ?: "2.4.5"
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching installed versionName: ${e.message}")
-            "2.4.0"
+            "2.4.5"
         }
     }
 

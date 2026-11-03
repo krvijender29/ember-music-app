@@ -10739,7 +10739,7 @@ class MainActivity : AppCompatActivity() {
             showUpdateAvailableDialog(
                 EmberUpdateManager.UpdateInfo(
                     latestVersionCode = EmberUpdateManager.getCurrentVersionCode(this) + 1,
-                    latestVersionName = "2.4.1",
+                    latestVersionName = "2.4.5",
                     apkDownloadUrl = "https://github.com/krvijender29/ember-music-app/releases/latest/download/app-debug.apk",
                     releaseNotes = "• Studio Fidelity 320 kbps stream enhancements\n• Custom APK update engine with cryptographic signature verification\n• Improved lockscreen playback controls\n• Next-Gen Recommendation Engine optimizations",
                     isForceUpdate = false,
