@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tabLibraryView: View
 
-    private lateinit var tabProfileView: androidx.core.widget.NestedScrollView
+    private lateinit var tabProfileView: View
 
 
 
@@ -12324,11 +12324,11 @@ class MainActivity : AppCompatActivity() {
 
             dpToPx(20),
 
-            safeTop + dpToPx(14),
+            safeTop + dpToPx(12),
 
             dpToPx(20),
 
-            dpToPx(14)
+            dpToPx(10)
 
         )
 

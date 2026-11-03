@@ -4865,111 +4865,116 @@
             <!-- 4. PROFILE & PREFERENCES TAB (CYBER-OBSIDIAN MASTER CONSOLE) -->
 
                         <!-- ========================================================= -->
-            <!-- 4. PROFILE & PREFERENCES TAB (SPOTIFY & JIOSAAVN CALIBER)  -->
+            <!-- 4. PROFILE & PREFERENCES TAB (PINNED HEADER ARCHITECTURE)   -->
             <!-- ========================================================= -->
-            <androidx.core.widget.NestedScrollView
+            <LinearLayout
                 android:id="@+id/tabProfileView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#0A090D"
-                android:clipToPadding="false"
-                android:overScrollMode="never"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
-                android:descendantFocusability="beforeDescendants"
+                android:orientation="vertical"
                 android:visibility="gone">
 
-                <FrameLayout
+                <!-- 1. Pinned Top Header: EMBER flame + title, Bell & Settings Cog (NEVER SCROLLS AWAY) -->
+                <RelativeLayout
+                    android:id="@+id/profileTopHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:descendantFocusability="beforeDescendants">
+                    android:background="#0A090D"
+                    android:paddingStart="20dp"
+                    android:paddingTop="56dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="10dp">
 
-                    <!-- Luminous Ambient Background Glow radiating behind Header & VIP Identity -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="380dp"
-                        android:background="@drawable/profile_ambient_glow" />
-
-                                        <LinearLayout
-                        android:layout_width="match_parent"
+                    <!-- Brand Flame + Logo -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingBottom="130dp">
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <!-- 1. Top Header: EMBER brand flame + EMBER title, and Notification Bell & Settings Cog -->
-                        <RelativeLayout
-                            android:id="@+id/profileTopHeader"
+                        <ImageView
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:src="@drawable/ic_flame"
+                            app:tint="#FF5A36" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:fontFamily="sans-serif-black"
+                            android:letterSpacing="0.08"
+                            android:text="EMBER"
+                            android:textColor="@color/white"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Right Actions: Bell + Settings -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <!-- Notification Bell -->
+                        <ImageView
+                            android:id="@+id/btnProfileBell"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/circle_dark_action_bg"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:padding="8.5dp"
+                            android:src="@drawable/ic_bell"
+                            app:tint="@color/white" />
+
+                        <!-- Settings Cog -->
+                        <ImageView
+                            android:id="@+id/btnProfileHeaderSettings"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:layout_marginStart="10dp"
+                            android:background="@drawable/circle_dark_action_bg"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:padding="8.5dp"
+                            android:src="@drawable/ic_settings"
+                            app:tint="@color/white" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <!-- 2. Scrollable Body (Blocks child focus stealing so it NEVER auto-scrolls) -->
+                <androidx.core.widget.NestedScrollView
+                    android:id="@+id/profileScrollView"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never"
+                    android:descendantFocusability="blocksDescendants">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <!-- Luminous Ambient Background Glow radiating behind VIP Identity -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="320dp"
+                            android:background="@drawable/profile_ambient_glow" />
+
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:paddingStart="20dp"
-                            android:paddingTop="74dp"
-                            android:paddingEnd="20dp"
-                            android:paddingBottom="14dp">
-
-                            <!-- Brand Flame + Logo -->
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentStart="true"
-                                android:layout_centerVertical="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="26dp"
-                                    android:layout_height="26dp"
-                                    android:src="@drawable/ic_flame"
-                                    app:tint="#FF5A36" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:fontFamily="sans-serif-black"
-                                    android:letterSpacing="0.08"
-                                    android:text="EMBER"
-                                    android:textColor="@color/white"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <!-- Right Actions: Bell + Settings -->
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentEnd="true"
-                                android:layout_centerVertical="true"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <!-- Notification Bell -->
-                                <ImageView
-                                    android:id="@+id/btnProfileBell"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:background="@drawable/circle_dark_action_bg"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:padding="8.5dp"
-                                    android:src="@drawable/ic_bell"
-                                    app:tint="@color/white" />
-
-                                <!-- Settings Cog -->
-                                <ImageView
-                                    android:id="@+id/btnProfileHeaderSettings"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:layout_marginStart="10dp"
-                                    android:background="@drawable/circle_dark_action_bg"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:padding="8.5dp"
-                                    android:src="@drawable/ic_settings"
-                                    app:tint="@color/white" />
-                            </LinearLayout>
-                        </RelativeLayout>
+                            android:orientation="vertical"
+                            android:paddingTop="6dp"
+                            android:paddingBottom="130dp">
 
                         <!-- ========================================================= -->
                         <!-- 2. LOGGED IN USER PROFILE (SPOTIFY/JIOSAAVN VIP PASS)    -->
@@ -5034,7 +5039,7 @@
                                         android:layout_marginBottom="2dp"
                                         android:background="@drawable/profile_camera_btn_bg"
                                         android:clickable="true"
-                                        android:focusable="true">
+                                        android:focusable="false">
 
                                         <ImageView
                                             android:layout_width="14dp"
@@ -5133,7 +5138,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:gravity="center"
                                     android:orientation="vertical">
 
@@ -5177,7 +5182,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:gravity="center"
                                     android:orientation="vertical">
 
@@ -5221,7 +5226,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:gravity="center"
                                     android:orientation="vertical">
 
@@ -5277,7 +5282,7 @@
                                     android:layout_alignParentEnd="true"
                                     android:layout_centerVertical="true"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:fontFamily="sans-serif-bold"
                                     android:padding="4dp"
                                     android:text="See All →"
@@ -5306,7 +5311,7 @@
                                         android:layout_height="146dp"
                                         android:background="@drawable/bg_playlist_liked_card"
                                         android:clickable="true"
-                                        android:focusable="true">
+                                        android:focusable="false">
 
                                         <!-- Glowing Neon Heart in Center -->
                                         <ImageView
@@ -5373,7 +5378,7 @@
                                         android:layout_marginStart="12dp"
                                         android:background="@drawable/bg_playlist_chill_card"
                                         android:clickable="true"
-                                        android:focusable="true">
+                                        android:focusable="false">
 
                                         <ImageView
                                             android:layout_width="match_parent"
@@ -5436,7 +5441,7 @@
                                         android:layout_marginStart="12dp"
                                         android:background="@drawable/bg_playlist_workout_card"
                                         android:clickable="true"
-                                        android:focusable="true">
+                                        android:focusable="false">
 
                                         <ImageView
                                             android:layout_width="match_parent"
@@ -5502,7 +5507,7 @@
                                 android:layout_marginTop="20dp"
                                 android:background="@drawable/profile_activity_card_bg"
                                 android:clickable="true"
-                                android:focusable="true">
+                                android:focusable="false">
 
                                 <!-- Decorative Peeking Vinyl Record on the right -->
                                 <ImageView
@@ -5729,7 +5734,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -5775,7 +5780,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -5821,7 +5826,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -5881,7 +5886,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -5927,7 +5932,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -5973,7 +5978,7 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="56dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:paddingStart="16dp"
                                     android:paddingEnd="16dp">
 
@@ -6150,7 +6155,7 @@
                                         android:layout_weight="1"
                                         android:background="@drawable/editorial_badge_bg"
                                         android:clickable="true"
-                                        android:focusable="true"
+                                        android:focusable="false"
                                         android:gravity="center"
                                         android:text="Sign In"
                                         android:textColor="@color/white"
@@ -6163,7 +6168,7 @@
                                         android:layout_height="match_parent"
                                         android:layout_weight="1"
                                         android:clickable="true"
-                                        android:focusable="true"
+                                        android:focusable="false"
                                         android:gravity="center"
                                         android:text="Create Account"
                                         android:textColor="@color/text_secondary"
@@ -6241,7 +6246,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="16dp"
                                     android:clickable="true"
-                                    android:focusable="true"
+                                    android:focusable="false"
                                     android:padding="8dp"
                                     android:text="Continue as Guest"
                                     android:textColor="#9E9EB2"
@@ -6256,6 +6261,7 @@
                     </LinearLayout>
                 </FrameLayout>
             </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
         </FrameLayout>
 
