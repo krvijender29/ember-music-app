@@ -4875,41 +4875,60 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <!-- 1. Pinned Top Header: EMBER flame + title, Bell & Settings Cog (NEVER SCROLLS AWAY) -->
-                <RelativeLayout
+                <!-- 1. Pinned Top Header: EMBER brand logo + mark, Notification Bell & Settings Cog -->
+                <LinearLayout
                     android:id="@+id/profileTopHeader"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:background="#0A090D"
                     android:paddingStart="20dp"
-                    android:paddingTop="56dp"
+                    android:paddingTop="68dp"
                     android:paddingEnd="20dp"
-                    android:paddingBottom="10dp">
+                    android:paddingBottom="12dp">
 
-                    <!-- Brand Flame + Logo -->
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                        <ImageView
-                            android:layout_width="26dp"
-                            android:layout_height="26dp"
-                            android:src="@drawable/ic_flame"
-                            app:tint="#FF5A36" />
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:includeFontPadding="false"
+                                android:letterSpacing="0.08"
+                                android:text="@string/header_ember_logo"
+                                android:textColor="@color/white"
+                                android:textSize="24sp"
+                                android:textStyle="bold" />
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="14dp"
+                                android:layout_marginStart="8dp"
+                                android:src="@drawable/ic_ember_waveform_mark"
+                                android:contentDescription="EMBER Logo Mark" />
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:fontFamily="sans-serif-black"
-                            android:letterSpacing="0.08"
-                            android:text="EMBER"
-                            android:textColor="@color/white"
-                            android:textSize="20sp"
+                            android:layout_marginTop="3dp"
+                            android:fontFamily="sans-serif-medium"
+                            android:includeFontPadding="false"
+                            android:letterSpacing="0.16"
+                            android:text="AUDIOPHILE PROFILE"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="9sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -4917,8 +4936,6 @@
                     <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
@@ -4947,7 +4964,7 @@
                             android:src="@drawable/ic_settings"
                             app:tint="@color/white" />
                     </LinearLayout>
-                </RelativeLayout>
+                </LinearLayout>
 
                 <!-- 2. Scrollable Body (Blocks child focus stealing so it NEVER auto-scrolls) -->
                 <androidx.core.widget.NestedScrollView
