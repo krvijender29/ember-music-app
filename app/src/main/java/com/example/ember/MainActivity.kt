@@ -250,6 +250,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 
 import kotlinx.coroutines.Job
 
@@ -4074,128 +4075,12 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        // Preload Reference Track ("Deewane" by Navaan Sandhu, Bir, Daaku from reference screenshots)
-
+        // If no track is playing, hide mini player cleanly
         if (currentTrack == null) {
-
-            val refTrack = Track(
-
-                id = "ref_kath_lagda_001",
-
-                title = "Kath Lagda",
-
-                artist = "Navaan Sandhu, Dhanda Nyoliwala",
-
-                album = "House Navior",
-
-                duration = "3:26",
-
-                thumbnail = "https://c.saavncdn.com/757/House-Navior-Punjabi-2025-20250917053150-500x500.jpg",
-
-                audioUrl = "",
-
-                isLiked = false,
-
-                isYoutubeFallback = false
-
-            )
-
-            currentTrack = refTrack
-
-            playlistQueue.add(refTrack)
-
-            currentTrackIndex = 0
-
+            miniPlayerView.visibility = View.GONE
+        } else {
             miniPlayerView.visibility = View.VISIBLE
-
-            val sanitizedRefTitle = EmberAudioEngine.sanitizeMetadata(refTrack.title)
-            val sanitizedRefArtist = EmberAudioEngine.sanitizeMetadata(refTrack.artist)
-            tvMiniTitle.text = sanitizedRefTitle
-
-            tvMiniArtist.text = sanitizedRefArtist
-
-            ivMiniThumb.load(refTrack.thumbnail) {
-
-                crossfade(true)
-
-                allowHardware(false)
-
-                placeholder(ThumbnailLoadingDrawable())
-
-                error(R.drawable.rounded_card_bg)
-
-                listener(
-
-                    onSuccess = { _, result ->
-
-                        val bmp = (result.drawable as? BitmapDrawable)?.bitmap
-
-                        if (bmp != null) {
-
-                            val color = extractVibrantRimColor(bmp)
-
-                            applyDynamicUpperLineColor(color)
-
-                            val blurred = BlurUtils.fastBlur(bmp, radius = 25, downscaleWidth = 60)
-
-                            ivMiniAmbientMesh.setImageBitmap(blurred)
-
-                            ivFullAmbientMesh.setImageBitmap(blurred)
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-
-                                ivMiniAmbientMesh.setRenderEffect(RenderEffect.createBlurEffect(120f, 120f, Shader.TileMode.CLAMP))
-
-                                val satMatrix = ColorMatrix().apply { setSaturation(2.2f) }
-
-                                ivMiniAmbientMesh.colorFilter = ColorMatrixColorFilter(satMatrix)
-
-                            }
-
-                        }
-
-                    }
-
-                )
-
-            }
-
-            tvFullTitle.text = sanitizedRefTitle
-
-            tvFullArtist.text = sanitizedRefArtist
-
-            tvFullDuration.text = refTrack.duration
-
-            tvFullCurrentTime.text = "0:00"
-
-            fullSeekBar.progress = 0
-
-            pbMiniProgress.progress = 0
-
-            ivFullThumb.load(refTrack.thumbnail) {
-
-                crossfade(true)
-
-                placeholder(ThumbnailLoadingDrawable())
-
-                error(R.drawable.rounded_card_bg)
-
-            }
-
-            ivVinylCenterLabel.load(refTrack.thumbnail) {
-
-                crossfade(true)
-
-                placeholder(ThumbnailLoadingDrawable())
-
-                error(R.drawable.rounded_card_bg)
-
-            }
-
-            updateAmbientBackdrop(refTrack.thumbnail)
-
-            updateLikeIcons(false)
-
+            updateUiForTrack(currentTrack!!)
         }
 
 
@@ -4439,156 +4324,84 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun recalibrateDailyMix() {
-
-        // Circular pbHomeLoading removed per user design request
-
         lifecycleScope.launch {
-
             val topArtists = dbManager.getTopArtists(3)
-
             val topGenres = dbManager.getTopGenres(2)
-
             val primaryGenre = topGenres.firstOrNull() ?: "Punjabi"
-
             val topArtist = topArtists.firstOrNull() ?: "Navaan Sandhu"
 
+            // Concurrent high-speed fetching: all sections load in parallel
+            val artistTracksDef = async(Dispatchers.IO) {
+                EmberAudioEngine.searchTracks("$topArtist best hits", count = 6)
+            }
+            val tasteTracksDef = async(Dispatchers.IO) {
+                EmberAudioEngine.searchTracks("$primaryGenre top songs", count = 6)
+            }
+            val smartMixDef = async(Dispatchers.IO) {
+                EmberRecommendationEngine.getSmartDailyMix(dbManager, count = 16)
+            }
 
-
-            // Auto-Recommendation: Recommended For You
-
+            // Quick recommendations
             refreshRecommendedForYouSection()
+            refreshDiscoverNewSection()
+            refreshMoodMixSection()
 
-
-
-            // Section 3: More from {topArtist}
-
-            val artistTracks = EmberAudioEngine.searchTracks("$topArtist best hits", count = 6)
-
+            val artistTracks = artistTracksDef.await()
             for (t in artistTracks) t.isLiked = dbManager.isTrackLiked(t.id)
 
             if (artistTracks.isNotEmpty()) {
-
                 layoutMoreFromArtistSection.visibility = View.VISIBLE
-
                 tvMoreFromArtistTitle.text = "✦ More from $topArtist"
-
                 moreFromArtistAdapter.setTracks(artistTracks)
-
                 btnPlayAllMoreFromArtist.setOnClickListener {
-
                     playlistQueue.clear()
-
                     playlistQueue.addAll(artistTracks)
-
                     currentTrackIndex = 0
-
                     playTrack(artistTracks[0])
-
                 }
-
             } else {
-
                 layoutMoreFromArtistSection.visibility = View.GONE
-
             }
 
-
-
-            // Section 4: Based on Your Taste
-
-            val tasteTracks = EmberAudioEngine.searchTracks("$primaryGenre top songs", count = 6)
-
+            val tasteTracks = tasteTracksDef.await()
             for (t in tasteTracks) t.isLiked = dbManager.isTrackLiked(t.id)
-
             basedOnTasteAdapter.setTracks(tasteTracks)
 
-
-
-            // Auto-Recommendation: Discover Something New
-
-            refreshDiscoverNewSection()
-
-
-
-            // Auto-Recommendation: Mood Mix
-
-            refreshMoodMixSection()
-
-
-
-            // Section 5: Smart Daily Mix (Multi-Tiered Algorithmic Blend)
-
-            val smartMixTracks = EmberRecommendationEngine.getSmartDailyMix(dbManager, count = 16)
-
+            val smartMixTracks = smartMixDef.await()
             for (t in smartMixTracks) t.isLiked = dbManager.isTrackLiked(t.id)
 
-
-
             tvDailyMixTitle.text = "Daily Mix • $topArtist & More"
-
             tvDailyMixSubtitle.text = "Personalized soundscape featuring $topArtist, $primaryGenre and fresh discoveries."
 
-
-
             val playDailyMix = {
-
                 val mix = if (smartMixTracks.isNotEmpty()) smartMixTracks else artistTracks + tasteTracks
-
                 if (mix.isNotEmpty()) {
-
                     playlistQueue.clear()
-
                     playlistQueue.addAll(mix)
-
                     currentTrackIndex = 0
-
                     playTrack(mix[0])
-
                 }
-
             }
-
             cardDailyMixBanner.setOnClickListener { playDailyMix() }
-
             btnDailyMixPlay.setOnClickListener { playDailyMix() }
 
-
-
-            // Update Featured Station buttons
-
             val heroQueue = if (smartMixTracks.isNotEmpty()) smartMixTracks else artistTracks
-
             if (heroQueue.isNotEmpty()) {
-
                 btnHeroPlayNow.setOnClickListener {
-
                     playlistQueue.clear()
-
                     playlistQueue.addAll(heroQueue)
-
                     currentTrackIndex = 0
-
                     playTrack(heroQueue[0])
-
                 }
-
                 btnHeroExplore.setOnClickListener {
-
                     playlistQueue.addAll(heroQueue)
-
                     Toast.makeText(this@MainActivity, "Added featured station to queue", Toast.LENGTH_SHORT).show()
-
                 }
-
             }
-
-
 
             hideHomeSkeleton()
             tvHeroSubtext.text = "Vibing with $topArtist and $primaryGenre soundscapes tailored for you."
-
         }
-
     }
 
 

@@ -110,6 +110,9 @@ object YouTubeMusicInnertubeEngine {
             return@withContext it as List<String>
         }
 
+        val suggestions = mutableListOf<String>()
+
+        // 1. YouTube Music Innertube Suggestions
         try {
             val json = JSONObject().apply {
                 put("context", buildClientContext())
@@ -117,36 +120,66 @@ object YouTubeMusicInnertubeEngine {
             }
             val req = createBaseRequestBuilder("music/get_search_suggestions", json).build()
             val res = client.newCall(req).execute()
-            val body = res.body?.string() ?: return@withContext emptyList()
+            val body = res.body?.string() ?: ""
 
-            val root = JSONObject(body)
-            val contents = root.optJSONArray("contents") ?: return@withContext emptyList()
-            if (contents.length() == 0) return@withContext emptyList()
-
-            val section = contents.getJSONObject(0).optJSONObject("searchSuggestionsSectionRenderer")
-            val items = section?.optJSONArray("contents") ?: return@withContext emptyList()
-
-            val suggestions = mutableListOf<String>()
-            for (i in 0 until items.length()) {
-                val item = items.getJSONObject(i)
-                val renderer = item.optJSONObject("searchSuggestionRenderer") ?: continue
-                val runs = renderer.optJSONObject("suggestion")?.optJSONArray("runs") ?: continue
-                val sb = StringBuilder()
-                for (r in 0 until runs.length()) {
-                    sb.append(runs.getJSONObject(r).optString("text"))
-                }
-                val text = sb.toString().trim()
-                if (text.isNotBlank() && !suggestions.contains(text)) {
-                    suggestions.add(text)
+            if (body.isNotBlank()) {
+                val root = JSONObject(body)
+                val contents = root.optJSONArray("contents")
+                if (contents != null && contents.length() > 0) {
+                    val section = contents.getJSONObject(0).optJSONObject("searchSuggestionsSectionRenderer")
+                    val items = section?.optJSONArray("contents")
+                    if (items != null) {
+                        for (i in 0 until items.length()) {
+                            val item = items.getJSONObject(i)
+                            val renderer = item.optJSONObject("searchSuggestionRenderer") ?: continue
+                            val runs = renderer.optJSONObject("suggestion")?.optJSONArray("runs") ?: continue
+                            val sb = StringBuilder()
+                            for (r in 0 until runs.length()) {
+                                sb.append(runs.getJSONObject(r).optString("text"))
+                            }
+                            val text = sb.toString().trim()
+                            if (text.isNotBlank() && !suggestions.contains(text)) {
+                                suggestions.add(text)
+                            }
+                        }
+                    }
                 }
             }
-
-            putCache(cacheKey, suggestions)
-            return@withContext suggestions
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch search suggestions: ${e.message}")
-            return@withContext emptyList()
+            Log.w(TAG, "YTM search suggestions warning: ${e.message}")
         }
+
+        // 2. Google Suggest JSON fallback (matching website server.py)
+        if (suggestions.isEmpty()) {
+            try {
+                val cleanEncoded = URLEncoder.encode(cleanQuery, "UTF-8")
+                val gUrl = "https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q=$cleanEncoded"
+                val gReq = Request.Builder().url(gUrl).header("User-Agent", "Mozilla/5.0").build()
+                val gRes = client.newCall(gReq).execute()
+                val gBody = gRes.body?.string() ?: ""
+                if (gBody.isNotBlank()) {
+                    val gArr = JSONArray(gBody)
+                    if (gArr.length() > 1) {
+                        val items = gArr.optJSONArray(1)
+                        if (items != null) {
+                            for (i in 0 until items.length()) {
+                                val s = items.optString(i).trim()
+                                if (s.isNotBlank() && !suggestions.contains(s)) {
+                                    suggestions.add(s)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+
+        if (suggestions.isNotEmpty()) {
+            putCache(cacheKey, suggestions)
+        }
+        return@withContext suggestions
     }
 
     // =========================================================================
@@ -609,6 +642,34 @@ object YouTubeMusicInnertubeEngine {
             if (resBody.isNotBlank()) {
                 val root = JSONObject(resBody)
                 val streamingData = root.optJSONObject("streamingData")
+
+                // Priority 1: Progressive MP4 Formats (itag 18 / 22 in `formats`)
+                // Google Video NEVER requires a PoToken on progressive muxed MP4 formats.
+                // Open-ended Range (bytes=0-) and seeking (HTTP 206) work 100% reliably with ZERO 403 Forbidden!
+                val formats = streamingData?.optJSONArray("formats")
+                if (formats != null && formats.length() > 0) {
+                    for (i in 0 until formats.length()) {
+                        val format = formats.getJSONObject(i)
+                        val itag = format.optInt("itag", 0)
+                        val url = format.optString("url", "")
+                        if (url.isNotBlank() && itag == 18) {
+                            putCache(cacheKey, url)
+                            Log.i(TAG, "Resolved Progressive YouTube stream (itag 18): $cleanVid")
+                            return@withContext url
+                        }
+                    }
+                    for (i in 0 until formats.length()) {
+                        val format = formats.getJSONObject(i)
+                        val url = format.optString("url", "")
+                        if (url.isNotBlank()) {
+                            putCache(cacheKey, url)
+                            Log.i(TAG, "Resolved Progressive YouTube stream (format): $cleanVid")
+                            return@withContext url
+                        }
+                    }
+                }
+
+                // Priority 2: Adaptive Formats fallback (if progressive not present)
                 val adaptiveFormats = streamingData?.optJSONArray("adaptiveFormats")
                 if (adaptiveFormats != null && adaptiveFormats.length() > 0) {
                     var bestUrl = ""
@@ -627,7 +688,7 @@ object YouTubeMusicInnertubeEngine {
                     }
                     if (bestUrl.isNotBlank()) {
                         putCache(cacheKey, bestUrl)
-                        Log.i(TAG, "Ultra-fast direct YouTube audio stream: $cleanVid (${maxBitrate / 1000} kbps)")
+                        Log.i(TAG, "Direct YouTube adaptive stream fallback: $cleanVid (${maxBitrate / 1000} kbps)")
                         return@withContext bestUrl
                     }
                 }

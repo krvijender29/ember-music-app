@@ -35,8 +35,17 @@ object EmberAudioEngine {
     private val searchCache = ConcurrentHashMap<String, Pair<Long, Any>>()
     private const val CACHE_TTL_MS = 60 * 60 * 1000L // 1 hour
 
+    fun isExpiredUrl(url: String?): Boolean {
+        if (url.isNullOrBlank()) return true
+        val match = Regex("""[?&]expire=(\d+)""").find(url) ?: return false
+        val expireSec = match.groupValues[1].toLongOrNull() ?: return false
+        val nowSec = System.currentTimeMillis() / 1000L
+        return nowSec >= (expireSec - 120) // Expired or expiring within 2 minutes
+    }
+
     fun isPreviewUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) return true
+        if (isExpiredUrl(url)) return true
         val lower = url.lowercase()
         return lower.contains("itunes.apple.com") ||
                 lower.contains("audio-ssl.itunes.apple.com") ||

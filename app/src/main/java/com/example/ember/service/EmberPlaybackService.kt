@@ -185,7 +185,7 @@ class EmberPlaybackService : MediaSessionService() {
                 Log.e(TAG, "ExoPlayer error on track $currentTrackIndex: ${error.message}")
                 val cur = currentTrack
                 serviceScope.launch {
-                    delay(600L)
+                    delay(500L)
                     val seedVid = cur?.getResolvedVideoId()
                     if (!seedVid.isNullOrBlank()) {
                         val freshUrl = YouTubeMusicInnertubeEngine.resolveAudioStream(seedVid)
@@ -193,6 +193,24 @@ class EmberPlaybackService : MediaSessionService() {
                             cur?.audioUrl = freshUrl
                             startPlaybackWithItem(cur!!)
                             return@launch
+                        }
+                    }
+                    // Try alternative video resolution (e.g. audio / topic version matching website player.js handleYtError)
+                    if (cur != null) {
+                        try {
+                            val altVid = YouTubeMusicInnertubeEngine.resolveTrackToVideoId("${cur.title} audio", cur.artist)
+                            if (!altVid.isNullOrBlank() && altVid != seedVid) {
+                                cur.youtubeVideoId = altVid
+                                val altUrl = YouTubeMusicInnertubeEngine.resolveAudioStream(altVid)
+                                if (altUrl.isNotBlank()) {
+                                    cur.audioUrl = altUrl
+                                    Log.i(TAG, "Switched to alternative YouTube stream: ${cur.title} ($altVid)")
+                                    startPlaybackWithItem(cur)
+                                    return@launch
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Alternative stream lookup failed: ${e.message}")
                         }
                     }
                     playNext()
@@ -355,6 +373,9 @@ class EmberPlaybackService : MediaSessionService() {
             playlistQueue.addAll(saved.queue)
             currentTrackIndex = saved.queueIndex.coerceIn(0, playlistQueue.size - 1)
             currentTrack = saved.track
+            if (EmberAudioEngine.isExpiredUrl(saved.track.audioUrl)) {
+                saved.track.audioUrl = ""
+            }
 
             val mediaItems = playlistQueue.map { buildMediaItem(it) }
             val safePos = if (saved.positionMs > 0) saved.positionMs else 0L
