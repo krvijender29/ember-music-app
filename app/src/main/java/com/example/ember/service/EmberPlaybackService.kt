@@ -115,7 +115,17 @@ class EmberPlaybackService : MediaSessionService() {
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
 
+        val httpDataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+            .setUserAgent("com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip")
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(25000)
+
+        val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(httpDataSourceFactory)
+
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
             .build()
@@ -134,7 +144,7 @@ class EmberPlaybackService : MediaSessionService() {
 
                     val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
                     if (isPreview) {
-                        resolveAndPlayTrack(track, matchedIndex)
+                        playTrackInternal(track)
                     } else {
                         // Pre-resolve upcoming track in advance
                         preResolveNextTrack(matchedIndex + 1)
@@ -151,53 +161,13 @@ class EmberPlaybackService : MediaSessionService() {
                 listeners.forEach { it.onPlaybackStateChanged(player.isPlaying, playbackState) }
                 saveCurrentPlaybackState()
                 if (playbackState == Player.STATE_ENDED) {
-                    // Track 100% completed
                     val ct = currentTrack
                     if (ct != null) {
                         val isLiked = dbManager.isTrackLiked(ct.id)
                         dbManager.recordEngagement(ct, 1.0f, isLiked = isLiked)
                     }
-                    if (player.hasNextMediaItem()) {
-                        playNext()
-                    } else {
-                        // Queue ended: dynamic continuous autoplay using YouTube Music Automix
-                        val track = currentTrack
-                        if (track != null) {
-                            serviceScope.launch(Dispatchers.IO) {
-                                val existingIds = playlistQueue.map { it.id }.toSet()
-                                val seedVideoId = track.getResolvedVideoId()
-                                    ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(track.title, track.artist)
-                                val ytRecs = if (!seedVideoId.isNullOrBlank()) {
-                                    YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 15)
-                                        .filter { it.id !in existingIds }
-                                } else emptyList()
-                                val recs = if (ytRecs.isNotEmpty()) ytRecs else {
-                                    EmberRecommendationEngine.getQueueRecommendations(
-                                        currentTrack = track,
-                                        excludeIds = existingIds,
-                                        count = 8,
-                                        dbManager = dbManager
-                                    )
-                                }
-                                withContext(Dispatchers.Main) {
-                                    if (recs.isNotEmpty()) {
-                                        val firstRec = recs.first()
-                                        playlistQueue.addAll(recs)
-                                        recs.forEach { player.addMediaItem(buildMediaItem(it)) }
-                                        listeners.forEach { it.onQueueChanged() }
-                                        saveCurrentPlaybackState()
-                                        playTrack(firstRec)
-                                    } else if (playlistQueue.isNotEmpty()) {
-                                        currentTrackIndex = 0
-                                        player.seekTo(0, 0L)
-                                        player.play()
-                                    }
-                                }
-                            }
-                        } else if (playlistQueue.isNotEmpty()) {
-                            playNext()
-                        }
-                    }
+                    // Seamlessly auto-advance to next track in YouTube Music mix
+                    playNext()
                 }
             }
 
@@ -213,9 +183,18 @@ class EmberPlaybackService : MediaSessionService() {
 
             override fun onPlayerError(error: PlaybackException) {
                 Log.e(TAG, "ExoPlayer error on track $currentTrackIndex: ${error.message}")
-                // Auto-advance so user playback never hangs or gets permanently stuck
+                val cur = currentTrack
                 serviceScope.launch {
-                    delay(500L)
+                    delay(600L)
+                    val seedVid = cur?.getResolvedVideoId()
+                    if (!seedVid.isNullOrBlank()) {
+                        val freshUrl = YouTubeMusicInnertubeEngine.resolveAudioStream(seedVid)
+                        if (freshUrl.isNotBlank() && freshUrl != cur?.audioUrl) {
+                            cur?.audioUrl = freshUrl
+                            startPlaybackWithItem(cur!!)
+                            return@launch
+                        }
+                    }
                     playNext()
                 }
             }
@@ -522,24 +501,7 @@ class EmberPlaybackService : MediaSessionService() {
         listeners.forEach { it.onQueueChanged() }
         saveCurrentPlaybackState()
 
-        resolveAudioJob?.cancel()
-        val isPreview = targetTrack.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(targetTrack.audioUrl)
-        if (isPreview) {
-            resolveAudioJob = serviceScope.launch {
-                acquireWakeLock()
-                try {
-                    val resolved = EmberAudioEngine.resolveAudioUrl(targetTrack)
-                    if (resolved.isNotBlank()) {
-                        targetTrack.audioUrl = resolved
-                    }
-                } finally {
-                    releaseWakeLock()
-                }
-                loadExoPlayerPlaylist(currentTrackIndex)
-            }
-        } else {
-            loadExoPlayerPlaylist(currentTrackIndex)
-        }
+        playTrackInternal(targetTrack)
 
         // Concurrently fetch YouTube Music /next Automix recommendations for Up Next queue
         fetchYouTubeNextRecommendations(targetTrack)
@@ -549,7 +511,7 @@ class EmberPlaybackService : MediaSessionService() {
 
     /**
      * Concurrently calls YouTube Music native /next Automix endpoint (RDAMVM<seedVideoId>)
-     * and automatically populates the 'Up Next' queue with 20–25 acoustically matched tracks.
+     * and automatically populates the 'Up Next' queue with 25 acoustically matched tracks.
      */
     private fun fetchYouTubeNextRecommendations(track: Track) {
         automixFetchJob?.cancel()
@@ -567,7 +529,6 @@ class EmberPlaybackService : MediaSessionService() {
                                 val newTracks = recs.filter { it.id !in existingIds }
                                 if (newTracks.isNotEmpty()) {
                                     playlistQueue.addAll(newTracks)
-                                    newTracks.forEach { player.addMediaItem(buildMediaItem(it)) }
                                     listeners.forEach { it.onQueueChanged() }
                                     saveCurrentPlaybackState()
                                     preResolveNextTrack(currentTrackIndex + 1)
@@ -583,21 +544,43 @@ class EmberPlaybackService : MediaSessionService() {
         }
     }
 
-    /**
-     * Prepares and loads the ExoPlayer playlist with all queued media items
-     */
-    private fun loadExoPlayerPlaylist(startIndex: Int) {
-        val mediaItems = playlistQueue.map { track ->
-            buildMediaItem(track)
+    private fun playTrackInternal(track: Track) {
+        resolveAudioJob?.cancel()
+        val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
+        if (isPreview) {
+            resolveAudioJob = serviceScope.launch {
+                acquireWakeLock()
+                try {
+                    val resolved = EmberAudioEngine.resolveAudioUrl(track)
+                    if (resolved.isNotBlank()) {
+                        track.audioUrl = resolved
+                    }
+                } finally {
+                    releaseWakeLock()
+                }
+                withContext(Dispatchers.Main) {
+                    if (currentTrack?.id == track.id) {
+                        startPlaybackWithItem(track)
+                    }
+                }
+            }
+        } else {
+            startPlaybackWithItem(track)
         }
+    }
 
-        player.setMediaItems(mediaItems, startIndex, 0L)
+    private fun startPlaybackWithItem(track: Track) {
+        if (track.audioUrl.isBlank()) {
+            Log.e(TAG, "Cannot start playback: audioUrl is empty for ${track.title}")
+            return
+        }
+        val mediaItem = buildMediaItem(track)
+        player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
 
-        val ct = currentTrack
-                    if (ct != null) { loadArtworkAsync(ct) }
-        preResolveNextTrack(startIndex + 1)
+        loadArtworkAsync(track)
+        preResolveNextTrack(currentTrackIndex + 1)
         saveCurrentPlaybackState()
     }
 
@@ -670,11 +653,7 @@ class EmberPlaybackService : MediaSessionService() {
                     val resolved = EmberAudioEngine.resolveAudioUrl(nextTrack)
                     if (resolved.isNotBlank()) {
                         nextTrack.audioUrl = resolved
-                        withContext(Dispatchers.Main) {
-                            if (nextIndex in 0 until player.mediaItemCount) {
-                                player.replaceMediaItem(nextIndex, buildMediaItem(nextTrack))
-                            }
-                        }
+                        Log.i(TAG, "Pre-resolved upcoming YouTube Music track: ${nextTrack.title}")
                     }
                 } catch (e: Exception) {
                     // ignore
@@ -683,49 +662,24 @@ class EmberPlaybackService : MediaSessionService() {
         }
     }
 
-    private fun resolveAndPlayTrack(track: Track, index: Int) {
-        resolveAudioJob?.cancel()
-        resolveAudioJob = serviceScope.launch {
-            acquireWakeLock()
-            try {
-                val resolved = EmberAudioEngine.resolveAudioUrl(track)
-                if (resolved.isNotBlank()) {
-                    track.audioUrl = resolved
-                    withContext(Dispatchers.Main) {
-                        if (index in 0 until player.mediaItemCount) {
-                            player.replaceMediaItem(index, buildMediaItem(track))
-                            if (index == player.currentMediaItemIndex) {
-                                player.prepare()
-                                player.play()
-                            }
-                        }
-                    }
-                } else {
-                    withContext(Dispatchers.Main) {
-                        playNext()
-                    }
-                }
-            } finally {
-                releaseWakeLock()
-            }
-        }
+    fun playTrackAtIndex(index: Int) {
+        if (index !in playlistQueue.indices) return
+        currentTrackIndex = index
+        val targetTrack = playlistQueue[currentTrackIndex]
+        currentTrack = targetTrack
+        listeners.forEach { it.onTrackChanged(targetTrack) }
+        saveCurrentPlaybackState()
+
+        playTrackInternal(targetTrack)
+
+        // As user advances through queue, continuously append Automix recommendations
+        checkAndAppendQueueRecommendations(targetTrack)
     }
 
     fun playTrack(track: Track) {
         val existingIndex = playlistQueue.indexOfFirst { it.id == track.id }
         if (existingIndex >= 0) {
-            currentTrackIndex = existingIndex
-            currentTrack = playlistQueue[existingIndex]
-            if (existingIndex < player.mediaItemCount) {
-                if (existingIndex == player.currentMediaItemIndex && player.playbackState != Player.STATE_IDLE) {
-                    player.play()
-                } else {
-                    player.seekTo(existingIndex, 0L)
-                    player.play()
-                }
-            } else {
-                setQueueAndPlay(playlistQueue, existingIndex)
-            }
+            playTrackAtIndex(existingIndex)
         } else {
             setQueueAndPlay(listOf(track), 0)
         }
@@ -734,34 +688,31 @@ class EmberPlaybackService : MediaSessionService() {
 
     fun playNext() {
         if (playlistQueue.isEmpty()) return
-        if (player.hasNextMediaItem()) {
-            player.seekToNextMediaItem()
-        } else if (playlistQueue.size > 1) {
-            player.seekTo(0, 0L)
-        }
-        player.play()
-        saveCurrentPlaybackState()
+        val nextIndex = (currentTrackIndex + 1) % playlistQueue.size
+        playTrackAtIndex(nextIndex)
     }
 
     fun playPrevious() {
         if (playlistQueue.isEmpty()) return
         if (player.currentPosition > 3000L) {
             player.seekTo(0L)
-        } else if (player.hasPreviousMediaItem()) {
-            player.seekToPreviousMediaItem()
-        } else {
-            player.seekTo(playlistQueue.size - 1, 0L)
+            player.play()
+            return
         }
-        player.play()
-        saveCurrentPlaybackState()
+        val prevIndex = if (currentTrackIndex - 1 < 0) playlistQueue.size - 1 else currentTrackIndex - 1
+        playTrackAtIndex(prevIndex)
     }
 
     fun addToQueue(track: Track) {
         if (playlistQueue.none { it.id == track.id }) {
             playlistQueue.add(track)
-            player.addMediaItem(buildMediaItem(track))
             listeners.forEach { it.onQueueChanged() }
             saveCurrentPlaybackState()
+            if (currentTrackIndex == -1 || playlistQueue.size == 1) {
+                playTrackAtIndex(0)
+            } else if (playlistQueue.size == currentTrackIndex + 2) {
+                preResolveNextTrack(currentTrackIndex + 1)
+            }
         }
     }
 
@@ -770,24 +721,27 @@ class EmberPlaybackService : MediaSessionService() {
         val newTracks = tracks.filter { track -> playlistQueue.none { it.id == track.id } }
         if (newTracks.isEmpty()) return
         playlistQueue.addAll(newTracks)
-        newTracks.forEach { player.addMediaItem(buildMediaItem(it)) }
         listeners.forEach { it.onQueueChanged() }
         saveCurrentPlaybackState()
+        if (currentTrackIndex == -1) {
+            playTrackAtIndex(0)
+        } else {
+            preResolveNextTrack(currentTrackIndex + 1)
+        }
     }
 
     fun playNextInQueue(track: Track) {
         val insertIndex = (currentTrackIndex + 1).coerceAtMost(playlistQueue.size)
         playlistQueue.add(insertIndex, track)
-        player.addMediaItem(insertIndex, buildMediaItem(track))
         listeners.forEach { it.onQueueChanged() }
         saveCurrentPlaybackState()
+        preResolveNextTrack(insertIndex)
     }
 
     fun removeFromQueue(position: Int) {
         if (position !in playlistQueue.indices) return
         if (position == currentTrackIndex) return
         playlistQueue.removeAt(position)
-        player.removeMediaItem(position)
         if (position < currentTrackIndex) {
             currentTrackIndex--
         }

@@ -174,84 +174,74 @@ object YouTubeMusicInnertubeEngine {
             val body = res.body?.string() ?: return@withContext UnifiedSearchResults(query, null, emptyList(), emptyList(), emptyList(), emptyList())
 
             val root = JSONObject(body)
-            val tabs = root.optJSONObject("contents")
-                ?.optJSONObject("tabbedSearchResultsRenderer")
-                ?.optJSONArray("tabs") ?: return@withContext UnifiedSearchResults(query, null, emptyList(), emptyList(), emptyList(), emptyList())
-
-            if (tabs.length() == 0) return@withContext UnifiedSearchResults(query, null, emptyList(), emptyList(), emptyList(), emptyList())
-
-            val sectionList = tabs.getJSONObject(0)
-                .optJSONObject("tabRenderer")
-                ?.optJSONObject("content")
-                ?.optJSONObject("sectionListRenderer")
-                ?.optJSONArray("contents") ?: JSONArray()
-
+            val allItems = extractAllListItems(root)
             var topMatchItem: TopMatchItem? = null
             val songs = mutableListOf<Track>()
             val artists = mutableListOf<ArtistItem>()
             val albums = mutableListOf<AlbumItem>()
             val playlists = mutableListOf<PlaylistItem>()
 
-            for (i in 0 until sectionList.length()) {
-                val secObj = sectionList.getJSONObject(i)
+            // Extract Top Match card if present in tabs / sectionList
+            val tabs = root.optJSONObject("contents")?.optJSONObject("tabbedSearchResultsRenderer")?.optJSONArray("tabs")
+            if (tabs != null && tabs.length() > 0) {
+                val secList = tabs.getJSONObject(0).optJSONObject("tabRenderer")?.optJSONObject("content")?.optJSONObject("sectionListRenderer")?.optJSONArray("contents")
+                if (secList != null && secList.length() > 0) {
+                    val cardShelf = secList.getJSONObject(0).optJSONObject("musicCardShelfRenderer")
+                    if (cardShelf != null) {
+                        val cardTitle = extractRunsText(cardShelf.optJSONObject("title")?.optJSONArray("runs"))
+                        val cardSubtitle = extractRunsText(cardShelf.optJSONObject("subtitle")?.optJSONArray("runs"))
+                        val cardThumb = extractHighResThumbnail(cardShelf.optJSONObject("thumbnail")?.optJSONObject("musicThumbnailRenderer")?.optJSONObject("thumbnail"))
+                        val cardVideoId = extractVideoIdFromCard(cardShelf)
 
-                // Top Match: musicCardShelfRenderer
-                val cardShelf = secObj.optJSONObject("musicCardShelfRenderer")
-                if (cardShelf != null && topMatchItem == null) {
-                    val cardTitle = extractRunsText(cardShelf.optJSONObject("title")?.optJSONArray("runs"))
-                    val cardSubtitle = extractRunsText(cardShelf.optJSONObject("subtitle")?.optJSONArray("runs"))
-                    val cardThumb = extractHighResThumbnail(cardShelf.optJSONObject("thumbnail")?.optJSONObject("musicThumbnailRenderer")?.optJSONObject("thumbnail"))
-                    val cardVideoId = extractVideoIdFromCard(cardShelf)
-
-                    if (cardVideoId.isNotBlank()) {
-                        val topTrack = Track(
-                            id = cardVideoId,
-                            title = cardTitle,
-                            artist = cardSubtitle.split("•").firstOrNull()?.trim() ?: cardSubtitle,
-                            album = "YouTube Music",
-                            thumbnail = cardThumb,
-                            youtubeVideoId = cardVideoId,
-                            source = "ytmusic"
-                        )
-                        topMatchItem = TopMatchItem.SongMatch(topTrack)
-                    } else if (cardSubtitle.contains("Artist", ignoreCase = true)) {
-                        val topArtist = ArtistItem(
-                            id = "yt_art_${cleanQuery.hashCode()}",
-                            name = cardTitle,
-                            image = cardThumb,
-                            role = "Artist",
-                            followerCount = cardSubtitle
-                        )
-                        topMatchItem = TopMatchItem.ArtistMatch(topArtist)
+                        if (cardVideoId.isNotBlank()) {
+                            val topTrack = Track(
+                                id = cardVideoId,
+                                title = cardTitle,
+                                artist = cardSubtitle.split("•").firstOrNull()?.trim() ?: cardSubtitle,
+                                album = "YouTube Music",
+                                thumbnail = cardThumb,
+                                youtubeVideoId = cardVideoId,
+                                source = "ytmusic"
+                            )
+                            topMatchItem = TopMatchItem.SongMatch(topTrack)
+                        } else if (cardSubtitle.contains("Artist", ignoreCase = true)) {
+                            val topArtist = ArtistItem(
+                                id = "yt_art_${cleanQuery.hashCode()}",
+                                name = cardTitle,
+                                image = cardThumb,
+                                role = "Artist",
+                                followerCount = cardSubtitle
+                            )
+                            topMatchItem = TopMatchItem.ArtistMatch(topArtist)
+                        }
                     }
                 }
+            }
 
-                // Shelves: musicShelfRenderer
-                val shelf = secObj.optJSONObject("musicShelfRenderer") ?: continue
-                val shelfTitle = extractRunsText(shelf.optJSONObject("title")?.optJSONArray("runs")).lowercase()
-                val shelfContents = shelf.optJSONArray("contents") ?: continue
+            for (item in allItems) {
+                val flexColumns = item.optJSONArray("flexColumns") ?: continue
+                val subtitle = if (flexColumns.length() > 1) {
+                    extractRunsText(flexColumns.getJSONObject(1).optJSONObject("musicResponsiveListItemFlexColumnRenderer")?.optJSONObject("text")?.optJSONArray("runs"))
+                } else ""
+                val subLower = subtitle.lowercase()
+                val pageType = item.optJSONObject("navigationEndpoint")
+                    ?.optJSONObject("browseEndpoint")
+                    ?.optJSONObject("browseEndpointContextSupportedConfigs")
+                    ?.optJSONObject("browseEndpointContextMusicConfig")
+                    ?.optString("pageType", "") ?: ""
 
-                for (c in 0 until shelfContents.length()) {
-                    val itemWrapper = shelfContents.getJSONObject(c)
-                    val item = itemWrapper.optJSONObject("musicResponsiveListItemRenderer") ?: continue
-
-                    when {
-                        shelfTitle.contains("song") || shelfTitle.contains("track") -> {
-                            parseTrackItem(item)?.let { if (songs.none { s -> s.id == it.id }) songs.add(it) }
-                        }
-                        shelfTitle.contains("artist") -> {
-                            parseArtistItem(item)?.let { if (artists.none { a -> a.name == it.name }) artists.add(it) }
-                        }
-                        shelfTitle.contains("album") -> {
-                            parseAlbumItem(item)?.let { if (albums.none { al -> al.id == it.id }) albums.add(it) }
-                        }
-                        shelfTitle.contains("playlist") -> {
-                            parsePlaylistItem(item)?.let { if (playlists.none { pl -> pl.id == it.id }) playlists.add(it) }
-                        }
-                        else -> {
-                            // General item fallback: try parsing as track if it has a videoId
-                            parseTrackItem(item)?.let { if (songs.none { s -> s.id == it.id }) songs.add(it) }
-                        }
+                when {
+                    pageType == "MUSIC_PAGE_TYPE_ARTIST" || subLower.startsWith("artist") -> {
+                        parseArtistItem(item)?.let { if (artists.none { a -> a.name == it.name }) artists.add(it) }
+                    }
+                    pageType == "MUSIC_PAGE_TYPE_ALBUM" || subLower.startsWith("album") -> {
+                        parseAlbumItem(item)?.let { if (albums.none { al -> al.id == it.id }) albums.add(it) }
+                    }
+                    pageType == "MUSIC_PAGE_TYPE_PLAYLIST" || subLower.startsWith("playlist") -> {
+                        parsePlaylistItem(item)?.let { if (playlists.none { pl -> pl.id == it.id }) playlists.add(it) }
+                    }
+                    else -> {
+                        parseTrackItem(item)?.let { if (songs.none { s -> s.id == it.id }) songs.add(it) }
                     }
                 }
             }
@@ -320,12 +310,11 @@ object YouTubeMusicInnertubeEngine {
             val res = client.newCall(req).execute()
             val body = res.body?.string() ?: return@withContext emptyList()
 
-            val items = parseSectionItems(JSONObject(body))
+            val items = extractAllListItems(JSONObject(body))
             val list = mutableListOf<ArtistItem>()
-            for (i in 0 until items.length()) {
+            for (obj in items) {
                 if (list.size >= limit) break
-                val obj = items.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
-                parseArtistItem(obj)?.let { list.add(it) }
+                parseArtistItem(obj)?.let { if (list.none { a -> a.name == it.name }) list.add(it) }
             }
             return@withContext list
         } catch (e: Exception) {
@@ -348,12 +337,11 @@ object YouTubeMusicInnertubeEngine {
             val res = client.newCall(req).execute()
             val body = res.body?.string() ?: return@withContext emptyList()
 
-            val items = parseSectionItems(JSONObject(body))
+            val items = extractAllListItems(JSONObject(body))
             val list = mutableListOf<AlbumItem>()
-            for (i in 0 until items.length()) {
+            for (obj in items) {
                 if (list.size >= limit) break
-                val obj = items.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
-                parseAlbumItem(obj)?.let { list.add(it) }
+                parseAlbumItem(obj)?.let { if (list.none { a -> a.id == it.id }) list.add(it) }
             }
             return@withContext list
         } catch (e: Exception) {
@@ -376,12 +364,11 @@ object YouTubeMusicInnertubeEngine {
             val res = client.newCall(req).execute()
             val body = res.body?.string() ?: return@withContext emptyList()
 
-            val items = parseSectionItems(JSONObject(body))
+            val items = extractAllListItems(JSONObject(body))
             val list = mutableListOf<PlaylistItem>()
-            for (i in 0 until items.length()) {
+            for (obj in items) {
                 if (list.size >= limit) break
-                val obj = items.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
-                parsePlaylistItem(obj)?.let { list.add(it) }
+                parsePlaylistItem(obj)?.let { if (list.none { p -> p.id == it.id }) list.add(it) }
             }
             return@withContext list
         } catch (e: Exception) {
@@ -658,10 +645,9 @@ object YouTubeMusicInnertubeEngine {
 
     private fun parseItemsFromSearchResponse(root: JSONObject, limit: Int): List<Track> {
         val tracks = mutableListOf<Track>()
-        val contents = parseSectionItems(root)
-        for (i in 0 until contents.length()) {
+        val items = extractAllListItems(root)
+        for (item in items) {
             if (tracks.size >= limit) break
-            val item = contents.getJSONObject(i).optJSONObject("musicResponsiveListItemRenderer") ?: continue
             parseTrackItem(item)?.let {
                 if (tracks.none { t -> t.id == it.id }) tracks.add(it)
             }
@@ -669,23 +655,75 @@ object YouTubeMusicInnertubeEngine {
         return tracks
     }
 
-    private fun parseSectionItems(root: JSONObject): JSONArray {
+    private fun extractAllListItems(root: JSONObject): List<JSONObject> {
+        val items = mutableListOf<JSONObject>()
         val tabs = root.optJSONObject("contents")
             ?.optJSONObject("tabbedSearchResultsRenderer")
-            ?.optJSONArray("tabs") ?: return JSONArray()
+            ?.optJSONArray("tabs")
+            ?: root.optJSONObject("contents")
+                ?.optJSONObject("twoColumnSearchResultsRenderer")
+                ?.optJSONObject("primaryContents")
+                ?.optJSONObject("sectionListRenderer")
+                ?.optJSONArray("contents")
+                ?.let { return parseSectionList(it) }
+            ?: return items
 
-        if (tabs.length() == 0) return JSONArray()
+        for (t in 0 until tabs.length()) {
+            val tab = tabs.optJSONObject(t) ?: continue
+            val sectionList = tab.optJSONObject("tabRenderer")
+                ?.optJSONObject("content")
+                ?.optJSONObject("sectionListRenderer")
+                ?.optJSONArray("contents") ?: continue
+            items.addAll(parseSectionList(sectionList))
+        }
+        return items
+    }
 
-        val sectionList = tabs.getJSONObject(0)
-            .optJSONObject("tabRenderer")
-            ?.optJSONObject("content")
-            ?.optJSONObject("sectionListRenderer")
-            ?.optJSONArray("contents") ?: return JSONArray()
+    private fun parseSectionList(sectionList: JSONArray): List<JSONObject> {
+        val list = mutableListOf<JSONObject>()
+        for (i in 0 until sectionList.length()) {
+            val secObj = sectionList.optJSONObject(i) ?: continue
 
-        if (sectionList.length() == 0) return JSONArray()
+            // 1. musicShelfRenderer
+            val shelf = secObj.optJSONObject("musicShelfRenderer")
+            if (shelf != null) {
+                val sc = shelf.optJSONArray("contents")
+                if (sc != null) {
+                    for (j in 0 until sc.length()) {
+                        sc.optJSONObject(j)?.optJSONObject("musicResponsiveListItemRenderer")?.let { list.add(it) }
+                    }
+                }
+            }
 
-        val shelf = sectionList.getJSONObject(0).optJSONObject("musicShelfRenderer") ?: return JSONArray()
-        return shelf.optJSONArray("contents") ?: JSONArray()
+            // 2. itemSectionRenderer
+            val isr = secObj.optJSONObject("itemSectionRenderer")
+            if (isr != null) {
+                val ic = isr.optJSONArray("contents")
+                if (ic != null) {
+                    for (j in 0 until ic.length()) {
+                        val sub = ic.optJSONObject(j) ?: continue
+                        sub.optJSONObject("musicResponsiveListItemRenderer")?.let { list.add(it) }
+                        sub.optJSONObject("musicShelfRenderer")?.optJSONArray("contents")?.let { nsc ->
+                            for (k in 0 until nsc.length()) {
+                                nsc.optJSONObject(k)?.optJSONObject("musicResponsiveListItemRenderer")?.let { list.add(it) }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. musicCardShelfRenderer (Top card)
+            val card = secObj.optJSONObject("musicCardShelfRenderer")
+            if (card != null) {
+                val cc = card.optJSONArray("contents")
+                if (cc != null) {
+                    for (j in 0 until cc.length()) {
+                        cc.optJSONObject(j)?.optJSONObject("musicResponsiveListItemRenderer")?.let { list.add(it) }
+                    }
+                }
+            }
+        }
+        return list
     }
 
     private fun parseTrackItem(item: JSONObject): Track? {
@@ -705,9 +743,16 @@ object YouTubeMusicInnertubeEngine {
         if (flexColumns.length() > 1) {
             val col1 = flexColumns.getJSONObject(1).optJSONObject("musicResponsiveListItemFlexColumnRenderer")
             val subtitle = extractRunsText(col1?.optJSONObject("text")?.optJSONArray("runs"))
-            val parts = subtitle.split("•")
-            if (parts.isNotEmpty()) artist = parts[0].trim()
-            if (parts.size > 1) album = parts[1].trim()
+            val parts = subtitle.split("•").map { it.trim() }.filter { it.isNotBlank() }
+            if (parts.isNotEmpty()) {
+                if (parts[0].equals("Song", ignoreCase = true) || parts[0].equals("Video", ignoreCase = true)) {
+                    if (parts.size > 1) artist = parts[1]
+                    if (parts.size > 2) album = parts[2]
+                } else {
+                    artist = parts[0]
+                    if (parts.size > 1) album = parts[1]
+                }
+            }
         }
 
         // Duration from fixedColumns

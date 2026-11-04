@@ -19,10 +19,11 @@ data class Track(
      * or checks if the primary id itself is a valid 11-char YouTube ID.
      */
     fun getResolvedVideoId(): String? {
-        if (!youtubeVideoId.isNullOrBlank() && youtubeVideoId!!.length == 11) {
+        val ytRegex = Regex("^[a-zA-Z0-9_-]{11}$")
+        if (!youtubeVideoId.isNullOrBlank() && ytRegex.matches(youtubeVideoId!!)) {
             return youtubeVideoId
         }
-        if (id.length == 11 && !id.contains(" ") && !id.contains("_")) {
+        if (ytRegex.matches(id)) {
             return id
         }
         return null

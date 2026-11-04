@@ -5298,40 +5298,19 @@ class MainActivity : AppCompatActivity() {
      * 5. Automatically populate "Up Next" queue with 20–25 acoustically matched songs from YouTube Music Automix.
      */
     private fun onSearchResultTrackSelected(selectedTrack: Track) {
-        playlistQueue.clear()
-        playlistQueue.add(selectedTrack)
-        currentTrackIndex = 0
-        playTrack(selectedTrack)
+        currentTrack = selectedTrack
+        updateUiForTrack(selectedTrack)
         Toast.makeText(this, "Playing \"${selectedTrack.title}\"", Toast.LENGTH_SHORT).show()
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val seedVideoId = selectedTrack.getResolvedVideoId()
-                    ?: YouTubeMusicInnertubeEngine.resolveTrackToVideoId(selectedTrack.title, selectedTrack.artist)
-
-                if (!seedVideoId.isNullOrBlank()) {
-                    val recommendations = YouTubeMusicInnertubeEngine.getAutomixRecommendations(seedVideoId, limit = 25)
-                    val newTracks = recommendations.filter { it.id != selectedTrack.id }
-                    if (newTracks.isNotEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            val service = EmberPlaybackService.instance
-                            if (service != null && service.currentTrack?.id == selectedTrack.id) {
-                                service.addAllToQueue(newTracks)
-                            } else {
-                                val existingIds = playlistQueue.map { it.id }.toSet()
-                                playlistQueue.addAll(newTracks.filter { it.id !in existingIds })
-                            }
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Up next: YouTube Music Automix (${newTracks.size} tracks)",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Search Automix error: ${e.message}")
-            }
+        val service = EmberPlaybackService.instance
+        if (service != null) {
+            service.isShuffleMode = isShuffleMode
+            service.setQueueAndPlay(listOf(selectedTrack), 0)
+        } else {
+            playlistQueue.clear()
+            playlistQueue.add(selectedTrack)
+            currentTrackIndex = 0
+            playTrack(selectedTrack)
         }
     }
 
@@ -10655,7 +10634,7 @@ class MainActivity : AppCompatActivity() {
             showUpdateAvailableDialog(
                 EmberUpdateManager.UpdateInfo(
                     latestVersionCode = EmberUpdateManager.getCurrentVersionCode(this) + 1,
-                    latestVersionName = "2.4.6",
+                    latestVersionName = "2.4.7",
                     apkDownloadUrl = "https://github.com/krvijender29/ember-music-app/releases/latest/download/app-debug.apk",
                     releaseNotes = "• Studio Fidelity 320 kbps stream enhancements\n• Custom APK update engine with cryptographic signature verification\n• Improved lockscreen playback controls\n• Next-Gen Recommendation Engine optimizations",
                     isForceUpdate = false,
