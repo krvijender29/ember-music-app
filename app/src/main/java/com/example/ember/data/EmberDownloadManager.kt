@@ -213,11 +213,18 @@ class EmberDownloadManager private constructor(private val context: Context) {
                 outputStream.close()
                 inputStream.close()
 
+                if (tmpAudioFile.length() < 50_000L) {
+                    val size = tmpAudioFile.length()
+                    tmpAudioFile.delete()
+                    throw IllegalStateException("Download truncated or invalid stream ($size bytes)")
+                }
+
                 if (finalAudioFile.exists()) finalAudioFile.delete()
                 if (!tmpAudioFile.renameTo(finalAudioFile)) {
                     tmpAudioFile.copyTo(finalAudioFile, overwrite = true)
                     tmpAudioFile.delete()
                 }
+                finalAudioFile.setReadable(true, false)
 
                 // 3. Download Thumbnail Image for Offline UI
                 var localThumbPath: String? = null

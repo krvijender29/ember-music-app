@@ -122,8 +122,8 @@ class EmberPlaybackService : MediaSessionService() {
             .setConnectTimeoutMs(15000)
             .setReadTimeoutMs(25000)
 
-        val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
-            .setDataSourceFactory(httpDataSourceFactory)
+        val defaultDataSourceFactory = androidx.media3.datasource.DefaultDataSource.Factory(this, httpDataSourceFactory)
+        val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(defaultDataSourceFactory)
 
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
@@ -143,18 +143,27 @@ class EmberPlaybackService : MediaSessionService() {
                     saveCurrentPlaybackState()
                     listeners.forEach { it.onTrackChanged(track) }
 
-                    val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
-                    if (isPreview) {
-                        playTrackInternal(track)
+                    val dlManager = com.example.ember.data.EmberDownloadManager.getInstance(this@EmberPlaybackService)
+                    val hasLocal = (!track.localAudioPath.isNullOrBlank() && File(track.localAudioPath!!).exists()) || dlManager.isDownloaded(track.id)
+                    val isOffline = track.isDownloaded || hasLocal
+
+                    if (!isOffline) {
+                        val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
+                        if (isPreview) {
+                            playTrackInternal(track)
+                        } else {
+                            // Pre-resolve upcoming track in advance
+                            preResolveNextTrack(matchedIndex + 1)
+                            // Load high-resolution artwork bytes asynchronously without blocking audio
+                            loadArtworkAsync(track)
+                        }
+                        // Autoplay recommendation check: automatically extend queue when near end
+                        checkAndAppendQueueRecommendations(track)
                     } else {
-                        // Pre-resolve upcoming track in advance
-                        preResolveNextTrack(matchedIndex + 1)
-                        // Load high-resolution artwork bytes asynchronously without blocking audio
+                        // Offline downloaded track: already loaded as file URI in ExoPlayer.
+                        // NEVER call playTrackInternal here to prevent infinite recursion loop on UI thread!
                         loadArtworkAsync(track)
                     }
-
-                    // Autoplay recommendation check: automatically extend queue when near end
-                    checkAndAppendQueueRecommendations(track)
                 }
             }
 
@@ -185,6 +194,15 @@ class EmberPlaybackService : MediaSessionService() {
             override fun onPlayerError(error: PlaybackException) {
                 Log.e(TAG, "ExoPlayer error on track $currentTrackIndex: ${error.message}")
                 val cur = currentTrack
+                if (cur != null) {
+                    val dlManager = com.example.ember.data.EmberDownloadManager.getInstance(this@EmberPlaybackService)
+                    val isOffline = cur.isDownloaded || dlManager.isDownloaded(cur.id) || (!cur.localAudioPath.isNullOrBlank() && File(cur.localAudioPath!!).exists())
+                    if (isOffline || !isNetworkAvailable()) {
+                        Log.w(TAG, "Offline error on ${cur.title}, auto-skipping to next")
+                        playNext()
+                        return
+                    }
+                }
                 serviceScope.launch {
                     delay(500L)
                     val seedVid = cur?.getResolvedVideoId()
@@ -594,6 +612,11 @@ class EmberPlaybackService : MediaSessionService() {
             return
         }
 
+        if (!isNetworkAvailable()) {
+            Log.w(TAG, "Cannot play online track '${track.title}' while offline")
+            return
+        }
+
         val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
         if (isPreview) {
             resolveAudioJob = serviceScope.launch {
@@ -676,12 +699,15 @@ class EmberPlaybackService : MediaSessionService() {
      * Non-blocking artwork loader for lock screen and notification media style
      */
     private fun loadArtworkAsync(track: Track) {
-        if (track.thumbnail.isBlank()) return
+        val localThumb = track.localThumbnailPath
+        val hasLocalThumb = !localThumb.isNullOrBlank() && File(localThumb).exists()
+        if (!hasLocalThumb && track.thumbnail.isBlank()) return
         serviceScope.launch(Dispatchers.IO) {
             try {
+                val artData: Any = if (hasLocalThumb) File(localThumb!!) else track.thumbnail
                 val loader = ImageLoader(this@EmberPlaybackService)
                 val request = ImageRequest.Builder(this@EmberPlaybackService)
-                    .data(track.thumbnail)
+                    .data(artData)
                     .allowHardware(false)
                     .build()
                 val result = (loader.execute(request) as? SuccessResult)?.drawable

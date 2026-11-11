@@ -1182,7 +1182,7 @@ class EmberDatabaseManager(private val context: Context) {
                         title = obj.getString("title"),
                         artist = obj.getString("artist"),
                         album = obj.optString("album", "EMBER Soundscape"),
-                        thumbnail = obj.getString("thumbnail"),
+                        thumbnail = obj.optString("thumbnail", ""),
                         audioUrl = obj.optString("audioUrl", ""),
                         duration = obj.optString("duration", "--:--"),
                         durationSec = obj.optInt("durationSec", 0),

@@ -20,6 +20,7 @@ import android.content.ClipboardManager
 import android.content.Context
 
 import android.content.Intent
+import android.net.Uri
 
 import android.content.res.ColorStateList
 
@@ -1352,10 +1353,11 @@ class MainActivity : AppCompatActivity() {
 
         dbManager = EmberDatabaseManager.getInstance(this)
         downloadManager = com.example.ember.data.EmberDownloadManager.getInstance(this)
-        setupDownloadListener()
-        setupNetworkMonitoring()
 
         initViews()
+
+        setupDownloadListener()
+        setupNetworkMonitoring()
 
         setupWindowInsets()
 
@@ -5232,77 +5234,70 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun playResolvedAudio(track: Track) {
-
         val service = EmberPlaybackService.instance
-
         if (service != null) {
-
             service.playTrack(track)
-
             return
+        }
 
+        val dlManager = com.example.ember.data.EmberDownloadManager.getInstance(this)
+        if (!track.isDownloaded && dlManager.isDownloaded(track.id)) {
+            val dl = dlManager.getDownloadedTrack(track.id)
+            if (dl != null) {
+                track.localAudioPath = dl.localAudioPath
+                track.localThumbnailPath = dl.localThumbnailPath
+                track.isDownloaded = true
+            }
+        }
+
+        val hasLocal = !track.localAudioPath.isNullOrBlank() && java.io.File(track.localAudioPath!!).exists()
+        if (hasLocal) {
+            startDirectPlayback(track)
+            return
+        }
+
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "You're offline. Only downloaded tracks can be played.", Toast.LENGTH_SHORT).show()
+            return
         }
 
         val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
-
         if (isPreview) {
-
             lifecycleScope.launch(Dispatchers.IO) {
-
                 val resolved = EmberAudioEngine.resolveAudioUrl(track)
-
                 withContext(Dispatchers.Main) {
-
                     if (resolved.isNotBlank()) {
-
                         track.audioUrl = resolved
-
                         startDirectPlayback(track)
-
                     } else {
-
                         Toast.makeText(this@MainActivity, "Unable to resolve full audio stream for ${track.title}", Toast.LENGTH_SHORT).show()
-
                     }
-
                 }
-
             }
-
         } else {
-
             startDirectPlayback(track)
-
         }
-
     }
 
-
-
     private fun startDirectPlayback(track: Track) {
-
         val p = player ?: return
-
         p.stop()
-
         try {
-
-            val mediaItem = MediaItem.fromUri(track.audioUrl)
-
+            val uri: Uri = if (!track.localAudioPath.isNullOrBlank() && java.io.File(track.localAudioPath!!).exists()) {
+                Uri.fromFile(java.io.File(track.localAudioPath!!))
+            } else if (track.audioUrl.isNotBlank()) {
+                Uri.parse(track.audioUrl)
+            } else {
+                return
+            }
+            val mediaItem = MediaItem.fromUri(uri)
             p.setMediaItem(mediaItem)
-
             p.prepare()
-
             p.play()
-
             tvFullDuration.text = track.duration
-
         } catch (e: Exception) {
-
             Toast.makeText(this, "Error playing audio: ${e.message}", Toast.LENGTH_SHORT).show()
-
         }
-
     }
 
 
@@ -7187,7 +7182,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onLost(network: android.net.Network) {
                 runOnUiThread {
-                    handleOfflineTransition()
+                    handleOfflineTransition(autoRedirect = false)
                 }
             }
         }
@@ -7201,18 +7196,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleOfflineTransition() {
+    private fun handleOfflineTransition(autoRedirect: Boolean = false) {
+        if (isOfflineMode) return
         isOfflineMode = true
         if (::layoutOfflineBanner.isInitialized) {
             layoutOfflineBanner.visibility = View.VISIBLE
         }
         val dlTracks = dbManager.getDownloadedTracks()
         if (dlTracks.isNotEmpty()) {
-            Toast.makeText(this, "You're offline. Redirecting to your downloads.", Toast.LENGTH_LONG).show()
-            switchTab(2)
-            openDownloadedSongsView()
+            if (autoRedirect) {
+                Toast.makeText(this, "You're offline. Playing from Downloads.", Toast.LENGTH_SHORT).show()
+                switchTab(2)
+                openDownloadedSongsView()
+            }
         } else {
-            Toast.makeText(this, "You're offline. No downloaded music found.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "You're offline. No downloaded music found.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -11757,11 +11755,9 @@ class MainActivity : AppCompatActivity() {
 
             loadHomeData()
 
-
-
-            lifecycleScope.launch {
-
-                val ok = dbManager.syncFromSupabase()
+            if (isNetworkAvailable()) {
+                lifecycleScope.launch {
+                    val ok = dbManager.syncFromSupabase()
 
                 if (ok) {
 
@@ -11783,6 +11779,7 @@ class MainActivity : AppCompatActivity() {
 
                 }
 
+            }
             }
 
         }
