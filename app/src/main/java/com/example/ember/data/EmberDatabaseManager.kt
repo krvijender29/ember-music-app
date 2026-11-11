@@ -90,6 +90,78 @@ class EmberDatabaseManager(private val context: Context) {
     }
 
     // ------------------------------------------------------------------------
+    // Downloaded Songs (Offline Playback)
+    // ------------------------------------------------------------------------
+
+    fun getDownloadedTracks(): List<Track> {
+        val jsonStr = prefs.getString("downloaded_tracks_cache", "[]") ?: "[]"
+        val tracks = parseTracks(jsonStr)
+        return tracks.filter { t ->
+            val p = t.localAudioPath
+            !p.isNullOrBlank() && java.io.File(p).exists()
+        }
+    }
+
+    fun isTrackDownloaded(trackId: String): Boolean {
+        return getDownloadedTracks().any { it.id == trackId }
+    }
+
+    fun getDownloadedTrack(trackId: String): Track? {
+        return getDownloadedTracks().firstOrNull { it.id == trackId }
+    }
+
+    fun saveDownloadedTrack(track: Track) {
+        val current = getDownloadedTracks().toMutableList()
+        current.removeAll { it.id == track.id }
+        track.isDownloaded = true
+        current.add(0, track)
+        val jsonArr = serializeTracks(current)
+        prefs.edit().putString("downloaded_tracks_cache", jsonArr.toString()).apply()
+    }
+
+    fun removeDownloadedTrack(trackId: String) {
+        val current = getDownloadedTracks().toMutableList()
+        val found = current.find { it.id == trackId }
+        if (found != null) {
+            found.localAudioPath?.let { p ->
+                val f = java.io.File(p)
+                if (f.exists()) f.delete()
+            }
+            found.localThumbnailPath?.let { p ->
+                val f = java.io.File(p)
+                if (f.exists()) f.delete()
+            }
+            current.remove(found)
+            val jsonArr = serializeTracks(current)
+            prefs.edit().putString("downloaded_tracks_cache", jsonArr.toString()).apply()
+        }
+    }
+
+    fun getDownloadedCount(): Int = getDownloadedTracks().size
+
+    fun getTotalDownloadedBytes(): Long {
+        var total = 0L
+        for (t in getDownloadedTracks()) {
+            val p = t.localAudioPath
+            if (!p.isNullOrBlank()) {
+                val f = java.io.File(p)
+                if (f.exists()) total += f.length()
+            }
+        }
+        return total
+    }
+
+    fun getLocalAvatarFile(): java.io.File {
+        val dir = context.filesDir.resolve("user_profile")
+        if (!dir.exists()) dir.mkdirs()
+        return java.io.File(dir, "avatar.jpg")
+    }
+
+    fun hasLocalAvatar(): Boolean {
+        return getLocalAvatarFile().exists() && getLocalAvatarFile().length() > 0
+    }
+
+    // ------------------------------------------------------------------------
     // Listening History / Recently Played
     // ------------------------------------------------------------------------
 
@@ -1114,7 +1186,15 @@ class EmberDatabaseManager(private val context: Context) {
                         audioUrl = obj.optString("audioUrl", ""),
                         duration = obj.optString("duration", "--:--"),
                         durationSec = obj.optInt("durationSec", 0),
-                        isLiked = obj.optBoolean("isLiked", true)
+                        isLiked = obj.optBoolean("isLiked", true),
+                        isYoutubeFallback = obj.optBoolean("isYoutubeFallback", false),
+                        youtubeVideoId = obj.optString("youtubeVideoId", "").ifEmpty { null },
+                        source = obj.optString("source", "ytmusic"),
+                        localAudioPath = obj.optString("localAudioPath", "").ifEmpty { null },
+                        localThumbnailPath = obj.optString("localThumbnailPath", "").ifEmpty { null },
+                        isDownloaded = obj.optBoolean("isDownloaded", false),
+                        downloadTimeMs = obj.optLong("downloadTimeMs", 0L),
+                        fileSize = obj.optLong("fileSize", 0L)
                     )
                 )
             }
@@ -1137,6 +1217,14 @@ class EmberDatabaseManager(private val context: Context) {
                 put("duration", track.duration)
                 put("durationSec", track.durationSec)
                 put("isLiked", track.isLiked)
+                put("isYoutubeFallback", track.isYoutubeFallback)
+                put("youtubeVideoId", track.youtubeVideoId ?: "")
+                put("source", track.source)
+                put("localAudioPath", track.localAudioPath ?: "")
+                put("localThumbnailPath", track.localThumbnailPath ?: "")
+                put("isDownloaded", track.isDownloaded)
+                put("downloadTimeMs", track.downloadTimeMs)
+                put("fileSize", track.fileSize)
             }
             jsonArr.put(obj)
         }

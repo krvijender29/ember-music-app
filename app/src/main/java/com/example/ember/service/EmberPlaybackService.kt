@@ -12,6 +12,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import java.io.File
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
@@ -414,7 +415,15 @@ class EmberPlaybackService : MediaSessionService() {
      * Automatically queries and appends recommended tracks when user approaches the end of queue
      * Utilizes YouTube Music Automix AI Engine (/next) with seamless fallback
      */
+    private fun isNetworkAvailable(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return false
+        val activeNet = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(activeNet) ?: return false
+        return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
     private fun checkAndAppendQueueRecommendations(track: Track) {
+        if (track.isDownloaded || !isNetworkAvailable()) return
         if (isAutoRecommending) return
         val remaining = playlistQueue.size - (currentTrackIndex + 1)
         if (remaining <= 2) {
@@ -567,6 +576,24 @@ class EmberPlaybackService : MediaSessionService() {
 
     private fun playTrackInternal(track: Track) {
         resolveAudioJob?.cancel()
+
+        // Check for offline downloaded track first
+        val dlManager = com.example.ember.data.EmberDownloadManager.getInstance(this)
+        if (!track.isDownloaded && dlManager.isDownloaded(track.id)) {
+            val dl = dlManager.getDownloadedTrack(track.id)
+            if (dl != null) {
+                track.localAudioPath = dl.localAudioPath
+                track.localThumbnailPath = dl.localThumbnailPath
+                track.isDownloaded = true
+            }
+        }
+
+        val hasLocalFile = !track.localAudioPath.isNullOrBlank() && File(track.localAudioPath!!).exists()
+        if (hasLocalFile) {
+            startPlaybackWithItem(track)
+            return
+        }
+
         val isPreview = track.audioUrl.isBlank() || EmberAudioEngine.isPreviewUrl(track.audioUrl)
         if (isPreview) {
             resolveAudioJob = serviceScope.launch {
@@ -591,8 +618,19 @@ class EmberPlaybackService : MediaSessionService() {
     }
 
     private fun startPlaybackWithItem(track: Track) {
-        if (track.audioUrl.isBlank()) {
-            Log.e(TAG, "Cannot start playback: audioUrl is empty for ${track.title}")
+        val dlManager = com.example.ember.data.EmberDownloadManager.getInstance(this)
+        if (!track.isDownloaded && dlManager.isDownloaded(track.id)) {
+            val dl = dlManager.getDownloadedTrack(track.id)
+            if (dl != null) {
+                track.localAudioPath = dl.localAudioPath
+                track.localThumbnailPath = dl.localThumbnailPath
+                track.isDownloaded = true
+            }
+        }
+
+        val hasLocalFile = !track.localAudioPath.isNullOrBlank() && File(track.localAudioPath!!).exists()
+        if (!hasLocalFile && track.audioUrl.isBlank()) {
+            Log.e(TAG, "Cannot start playback: audioUrl is empty and no local file for ${track.title}")
             return
         }
         val mediaItem = buildMediaItem(track)
@@ -611,11 +649,21 @@ class EmberPlaybackService : MediaSessionService() {
             .setArtist(track.artist)
             .setAlbumTitle(track.album)
 
-        if (track.thumbnail.isNotEmpty()) {
+        val localThumb = track.localThumbnailPath
+        if (!localThumb.isNullOrBlank() && File(localThumb).exists()) {
+            metadataBuilder.setArtworkUri(Uri.fromFile(File(localThumb)))
+        } else if (track.thumbnail.isNotEmpty()) {
             metadataBuilder.setArtworkUri(Uri.parse(track.thumbnail))
         }
 
-        val uri = if (track.audioUrl.isNotBlank()) Uri.parse(track.audioUrl) else Uri.EMPTY
+        val localAudio = track.localAudioPath
+        val uri = if (!localAudio.isNullOrBlank() && File(localAudio).exists()) {
+            Uri.fromFile(File(localAudio))
+        } else if (track.audioUrl.isNotBlank()) {
+            Uri.parse(track.audioUrl)
+        } else {
+            Uri.EMPTY
+        }
 
         return MediaItem.Builder()
             .setMediaId(track.id)

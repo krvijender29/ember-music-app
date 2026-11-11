@@ -30,6 +30,54 @@
 
 
 
+        <!-- Offline Mode Notification Banner -->
+        <LinearLayout
+            android:id="@+id/layoutOfflineBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="#D32F2F"
+            android:elevation="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_offline"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/tvOfflineBannerText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:text="Offline Mode • Playing from Downloads"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/btnOfflineGoToDownloads"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_tag_bg"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:text="View Downloads"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- CONTENT AREA (Swappable Tabs) -->
 
         <FrameLayout
@@ -4770,6 +4818,68 @@
 
 
 
+                        <!-- Downloaded Songs High-Contrast Card -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/cardDownloadedSongs"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:layout_marginEnd="20dp"
+                            android:layout_marginBottom="16dp"
+                            app:cardBackgroundColor="@color/bg_card"
+                            app:cardCornerRadius="16dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="@color/border_card"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:padding="16dp">
+
+                                <ImageView
+                                    android:layout_width="40dp"
+                                    android:layout_height="40dp"
+                                    android:background="@drawable/circle_button_bg"
+                                    android:padding="9dp"
+                                    android:src="@drawable/ic_download_done"
+                                    app:tint="#1DB954" />
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="14dp"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Downloaded Music"
+                                        android:textColor="@color/text_primary"
+                                        android:textSize="15sp"
+                                        android:textStyle="bold" />
+
+                                    <TextView
+                                        android:id="@+id/tvDownloadedCount"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:text="0 songs • Offline Ready"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="12sp" />
+                                </LinearLayout>
+
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@drawable/ic_chevron_right"
+                                    app:tint="@color/text_secondary" />
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
                         <!-- Custom User Playlists Section -->
 
                         <TextView
@@ -7991,7 +8101,7 @@
 
                 android:layout_height="wrap_content"
 
-                android:layout_toStartOf="@+id/btnFullLikeContainer"
+                android:layout_toStartOf="@+id/btnFullDownloadContainer"
 
                 android:layout_marginEnd="16dp"
 
@@ -8044,6 +8154,34 @@
             </LinearLayout>
 
 
+
+            <FrameLayout
+                android:id="@+id/btnFullDownloadContainer"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_toStartOf="@+id/btnFullLikeContainer"
+                android:layout_marginEnd="10dp"
+                android:layout_centerVertical="true"
+                android:background="@drawable/circle_heart_inactive_bg"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/ivFullDownload"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_download"
+                    app:tint="@color/player_text_secondary" />
+
+                <ProgressBar
+                    android:id="@+id/pbFullDownload"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:indeterminate="true"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <FrameLayout
 

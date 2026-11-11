@@ -17,7 +17,7 @@ import org.json.JSONArray
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
-class EmberAuthManager(context: Context) {
+class EmberAuthManager(private val context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("ember_auth_prefs", Context.MODE_PRIVATE)
     private val fbAuth = FirebaseAuth.getInstance()
@@ -129,6 +129,31 @@ class EmberAuthManager(context: Context) {
             putBoolean("is_guest", user.isGuest)
             apply()
         }
+
+        // Cache avatar locally for offline display
+        if (!user.avatarUrl.isNullOrBlank() && user.avatarUrl!!.startsWith("http")) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val avatarFile = java.io.File(context.filesDir, "user_avatar.jpg")
+                    val req = Request.Builder().url(user.avatarUrl!!).build()
+                    val res = httpClient.newCall(req).execute()
+                    if (res.isSuccessful && res.body != null) {
+                        avatarFile.writeBytes(res.body!!.bytes())
+                        prefs.edit().putString("local_avatar_path", avatarFile.absolutePath).apply()
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Offline avatar caching error: ${e.message}")
+                }
+            }
+        }
+    }
+
+    fun getLocalAvatarPath(): String? {
+        val path = prefs.getString("local_avatar_path", null)
+        if (path != null && java.io.File(path).exists()) return path
+        val defaultFile = java.io.File(context.filesDir, "user_avatar.jpg")
+        if (defaultFile.exists() && defaultFile.length() > 0) return defaultFile.absolutePath
+        return null
     }
 
     /**
@@ -350,5 +375,11 @@ class EmberAuthManager(context: Context) {
         }
     }
 
-    fun isLoggedIn(): Boolean = currentUser != null && !currentUser!!.isGuest
+    fun isLoggedIn(): Boolean {
+        if (currentUser != null) return !currentUser!!.isGuest
+        val isPersisted = prefs.getBoolean("is_logged_in", false)
+        val isGuest = prefs.getBoolean("is_guest", false)
+        val uid = prefs.getString("user_id", "") ?: ""
+        return isPersisted && !isGuest && uid.isNotEmpty()
+    }
 }

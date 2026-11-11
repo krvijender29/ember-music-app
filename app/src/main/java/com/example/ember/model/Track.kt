@@ -12,7 +12,12 @@ data class Track(
     var isLiked: Boolean = false,
     var isYoutubeFallback: Boolean = false,
     var youtubeVideoId: String? = null,
-    var source: String = "ytmusic"
+    var source: String = "ytmusic",
+    var localAudioPath: String? = null,
+    var localThumbnailPath: String? = null,
+    var isDownloaded: Boolean = false,
+    var downloadTimeMs: Long = 0L,
+    var fileSize: Long = 0L
 ) {
     /**
      * Returns the 11-char YouTube video ID if available,

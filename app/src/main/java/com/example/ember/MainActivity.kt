@@ -638,6 +638,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etLibrarySearch: EditText
 
     private lateinit var cardLikedSongs: MaterialCardView
+    private lateinit var cardDownloadedSongs: MaterialCardView
+    private lateinit var tvDownloadedCount: TextView
+    private lateinit var layoutOfflineBanner: LinearLayout
+    private lateinit var tvOfflineBannerText: TextView
+    private lateinit var btnOfflineGoToDownloads: TextView
+    private lateinit var btnFullDownloadContainer: FrameLayout
+    private lateinit var ivFullDownload: ImageView
+    private lateinit var pbFullDownload: ProgressBar
+    private lateinit var downloadManager: com.example.ember.data.EmberDownloadManager
+    private var isOfflineMode = false
+    private var networkCallback: android.net.ConnectivityManager.NetworkCallback? = null
 
     private lateinit var tvLikedCount: TextView
 
@@ -1340,8 +1351,9 @@ class MainActivity : AppCompatActivity() {
         authManager = EmberAuthManager.getInstance(this)
 
         dbManager = EmberDatabaseManager.getInstance(this)
-
-
+        downloadManager = com.example.ember.data.EmberDownloadManager.getInstance(this)
+        setupDownloadListener()
+        setupNetworkMonitoring()
 
         initViews()
 
@@ -1889,6 +1901,34 @@ class MainActivity : AppCompatActivity() {
         rvLibraryPlaylists = findViewById(R.id.rvLibraryPlaylists)
 
         rvLibraryTracks = findViewById(R.id.rvLibraryTracks)
+
+        cardDownloadedSongs = findViewById(R.id.cardDownloadedSongs)
+        tvDownloadedCount = findViewById(R.id.tvDownloadedCount)
+        layoutOfflineBanner = findViewById(R.id.layoutOfflineBanner)
+        tvOfflineBannerText = findViewById(R.id.tvOfflineBannerText)
+        btnOfflineGoToDownloads = findViewById(R.id.btnOfflineGoToDownloads)
+        btnFullDownloadContainer = findViewById(R.id.btnFullDownloadContainer)
+        ivFullDownload = findViewById(R.id.ivFullDownload)
+        pbFullDownload = findViewById(R.id.pbFullDownload)
+
+        btnOfflineGoToDownloads.setOnClickListener {
+            switchTab(2)
+            openDownloadedSongsView()
+        }
+
+        btnFullDownloadContainer.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            val cur = currentTrack ?: return@setOnClickListener
+            if (downloadManager.isDownloaded(cur.id)) {
+                Toast.makeText(this, "${cur.title} is already downloaded for offline listening.", Toast.LENGTH_SHORT).show()
+            } else if (downloadManager.isDownloading(cur.id)) {
+                Toast.makeText(this, "Downloading in progress...", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Downloading ${cur.title}...", Toast.LENGTH_SHORT).show()
+                downloadManager.startDownload(cur)
+                updateDownloadButtonForTrack(cur)
+            }
+        }
 
 
 
@@ -4066,6 +4106,18 @@ class MainActivity : AppCompatActivity() {
     // ==========================================
 
     private fun loadHomeData() {
+        if (!isNetworkAvailable()) {
+            if (::layoutHomeSkeleton.isInitialized) hideHomeSkeleton()
+            updateHeroGreeting()
+            if (currentTrack == null) {
+                miniPlayerView.visibility = View.GONE
+            } else {
+                miniPlayerView.visibility = View.VISIBLE
+                updateUiForTrack(currentTrack!!)
+            }
+            handleOfflineTransition()
+            return
+        }
         if (::layoutHomeSkeleton.isInitialized) {
             layoutHomeSkeleton.visibility = View.VISIBLE
             layoutHomeSkeleton.alpha = 1f
@@ -4935,6 +4987,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun updateUiForTrack(track: Track) {
+        updateDownloadButtonForTrack(track)
 
         if (::moreFromArtistAdapter.isInitialized) moreFromArtistAdapter.updatePlaybackState(track.id, true)
 
@@ -7052,6 +7105,157 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private fun updateDownloadButtonForTrack(track: Track?) {
+        if (track == null || !::ivFullDownload.isInitialized) return
+        val isDownloaded = downloadManager.isDownloaded(track.id)
+        val isDownloading = downloadManager.isDownloading(track.id)
+
+        if (isDownloading) {
+            ivFullDownload.visibility = View.GONE
+            pbFullDownload.visibility = View.VISIBLE
+        } else if (isDownloaded) {
+            pbFullDownload.visibility = View.GONE
+            ivFullDownload.visibility = View.VISIBLE
+            ivFullDownload.setImageResource(R.drawable.ic_download_done)
+            ivFullDownload.imageTintList = ColorStateList.valueOf(Color.parseColor("#1DB954"))
+        } else {
+            pbFullDownload.visibility = View.GONE
+            ivFullDownload.visibility = View.VISIBLE
+            ivFullDownload.setImageResource(R.drawable.ic_download)
+            ivFullDownload.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.player_text_secondary))
+        }
+    }
+
+    private fun setupDownloadListener() {
+        downloadManager.addListener(object : com.example.ember.data.EmberDownloadManager.DownloadListener {
+            override fun onDownloadStateChanged(state: com.example.ember.data.EmberDownloadManager.DownloadState) {
+                runOnUiThread {
+                    when (state) {
+                        is com.example.ember.data.EmberDownloadManager.DownloadState.Completed -> {
+                            Toast.makeText(this@MainActivity, "Downloaded: ${state.track.title}", Toast.LENGTH_SHORT).show()
+                            updateDownloadButtonForTrack(currentTrack)
+                            refreshLibraryTab()
+                            if (::layoutOpenedPlaylistOverlay.isInitialized && layoutOpenedPlaylistOverlay.visibility == View.VISIBLE && tvPlaylistHeroTitle.text == "Downloaded Music") {
+                                playlistDetailAdapter.setTracks(dbManager.getDownloadedTracks())
+                            }
+                        }
+                        is com.example.ember.data.EmberDownloadManager.DownloadState.Progress -> {
+                            if (currentTrack?.id == state.track.id) {
+                                ivFullDownload.visibility = View.GONE
+                                pbFullDownload.visibility = View.VISIBLE
+                            }
+                        }
+                        is com.example.ember.data.EmberDownloadManager.DownloadState.Failed -> {
+                            Toast.makeText(this@MainActivity, "Download failed: ${state.error}", Toast.LENGTH_SHORT).show()
+                            updateDownloadButtonForTrack(currentTrack)
+                        }
+                        is com.example.ember.data.EmberDownloadManager.DownloadState.Idle -> {
+                            updateDownloadButtonForTrack(currentTrack)
+                            refreshLibraryTab()
+                            if (::layoutOpenedPlaylistOverlay.isInitialized && layoutOpenedPlaylistOverlay.visibility == View.VISIBLE && tvPlaylistHeroTitle.text == "Downloaded Music") {
+                                playlistDetailAdapter.setTracks(dbManager.getDownloadedTracks())
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        })
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return false
+        val activeNet = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(activeNet) ?: return false
+        return caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun setupNetworkMonitoring() {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return
+        networkCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                runOnUiThread {
+                    if (isOfflineMode) {
+                        isOfflineMode = false
+                        if (::layoutOfflineBanner.isInitialized) {
+                            layoutOfflineBanner.visibility = View.GONE
+                        }
+                        Toast.makeText(this@MainActivity, "Back online", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            override fun onLost(network: android.net.Network) {
+                runOnUiThread {
+                    handleOfflineTransition()
+                }
+            }
+        }
+        try {
+            val req = android.net.NetworkRequest.Builder()
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            cm.registerNetworkCallback(req, networkCallback!!)
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to register network callback: ${e.message}")
+        }
+    }
+
+    private fun handleOfflineTransition() {
+        isOfflineMode = true
+        if (::layoutOfflineBanner.isInitialized) {
+            layoutOfflineBanner.visibility = View.VISIBLE
+        }
+        val dlTracks = dbManager.getDownloadedTracks()
+        if (dlTracks.isNotEmpty()) {
+            Toast.makeText(this, "You're offline. Redirecting to your downloads.", Toast.LENGTH_LONG).show()
+            switchTab(2)
+            openDownloadedSongsView()
+        } else {
+            Toast.makeText(this, "You're offline. No downloaded music found.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun openDownloadedSongsView() {
+        currentOpenedPlaylist = null
+        currentOpenedAlbum = null
+        isCurrentOpenedSaved = false
+
+        tvPlaylistBadge.text = "OFFLINE VAULT"
+        tvPlaylistBadge.setTextColor(Color.parseColor("#1DB954"))
+        tvPlaylistBadge.backgroundTintList = ColorStateList.valueOf(Color.argb(38, 29, 185, 84))
+
+        tvPlaylistHeroTitle.text = "Downloaded Music"
+        tvStickyPlaylistTitle.text = "Downloaded Music"
+        tvStickyPlaylistSubtitle.text = "OFFLINE VAULT"
+        ivStickyCover.setImageResource(R.drawable.ic_download_done)
+
+        ivPlaylistHeroCover.visibility = View.GONE
+        layoutLikedHeroCover.visibility = View.VISIBLE
+        ivPlaylistAmbientGlow.setImageResource(R.drawable.liked_songs_hero_gradient)
+
+        btnSaveToLibrary.visibility = View.GONE
+        btnDeletePlaylist.visibility = View.GONE
+        btnPlaylistShuffle.visibility = View.VISIBLE
+        btnPlaylistActionShare.visibility = View.GONE
+        btnPlaylistPlayAll.visibility = View.VISIBLE
+
+        playlistDetailAdapter.isCustomPlaylist = false
+        val downloaded = dbManager.getDownloadedTracks()
+        playlistDetailAdapter.setTracks(downloaded)
+
+        val totalSec = downloaded.sumOf { it.durationSec }
+        val min = totalSec / 60
+        val sizeStr = downloadManager.getFormattedTotalSize()
+        tvPlaylistMetadata.text = if (downloaded.isEmpty()) "No downloaded tracks yet" else "Offline • ${downloaded.size} songs • $sizeStr • ${min} min"
+
+        etPlaylistFilter.setText("")
+        layoutPlaylistEmpty.visibility = if (downloaded.isEmpty()) View.VISIBLE else View.GONE
+        pbPlaylistLoading.visibility = View.GONE
+
+        showOpenedPlaylistOverlay()
+    }
+
     fun openLikedSongsView() {
 
         currentOpenedPlaylist = null
@@ -7682,6 +7886,11 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+        cardDownloadedSongs.setOnClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            openDownloadedSongsView()
+        }
+
 
 
         btnCreatePlaylist.setOnClickListener {
@@ -7781,6 +7990,10 @@ class MainActivity : AppCompatActivity() {
         tvLikedCount.text = "$likedCount favorites"
 
         tvPlaylistCount.text = "$playlistCount playlists created"
+
+        val dlCount = dbManager.getDownloadedCount()
+        val dlSize = downloadManager.getFormattedTotalSize()
+        tvDownloadedCount.text = "$dlCount songs • $dlSize • Offline Ready"
 
     }
 
@@ -8337,6 +8550,42 @@ class MainActivity : AppCompatActivity() {
         tvOptViewAlbum.text = "View Album (${track.album.ifBlank { track.title }})"
 
 
+
+        val optDownload = view.findViewById<View>(R.id.optDownload)
+        val ivOptDownload = view.findViewById<ImageView>(R.id.ivOptDownload)
+        val tvOptDownload = view.findViewById<TextView>(R.id.tvOptDownload)
+
+        val isSongDownloaded = downloadManager.isDownloaded(track.id)
+        val isSongDownloading = downloadManager.isDownloading(track.id)
+
+        if (isSongDownloaded) {
+            ivOptDownload?.setImageResource(R.drawable.ic_trash)
+            ivOptDownload?.imageTintList = ColorStateList.valueOf(Color.parseColor("#FF3B30"))
+            tvOptDownload?.text = "Remove Download"
+            optDownload?.setOnClickListener {
+                dialog.dismiss()
+                downloadManager.deleteDownload(track.id)
+                Toast.makeText(this@MainActivity, "Removed from Downloads", Toast.LENGTH_SHORT).show()
+                updateDownloadButtonForTrack(currentTrack)
+                refreshLibraryTab()
+            }
+        } else if (isSongDownloading) {
+            ivOptDownload?.setImageResource(R.drawable.ic_download)
+            tvOptDownload?.text = "Downloading... (${downloadManager.getDownloadProgress(track.id)}%)"
+            optDownload?.setOnClickListener {
+                dialog.dismiss()
+                Toast.makeText(this@MainActivity, "Download in progress...", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            ivOptDownload?.setImageResource(R.drawable.ic_download)
+            tvOptDownload?.text = "Download Song"
+            optDownload?.setOnClickListener {
+                dialog.dismiss()
+                downloadManager.startDownload(track)
+                Toast.makeText(this@MainActivity, "Downloading ${track.title}...", Toast.LENGTH_SHORT).show()
+                updateDownloadButtonForTrack(currentTrack)
+            }
+        }
 
         val isLiked = dbManager.isTrackLiked(track.id)
 
@@ -12227,6 +12476,12 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
 
         super.onDestroy()
+        networkCallback?.let { cb ->
+            try {
+                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+                cm?.unregisterNetworkCallback(cb)
+            } catch (_: Exception) {}
+        }
 
         player?.currentPosition?.let { pos ->
 
