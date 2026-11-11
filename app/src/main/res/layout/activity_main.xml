@@ -30,20 +30,22 @@
 
 
 
-        <!-- Offline Mode Notification Banner -->
+        <!-- Offline Mode Notification Banner (Floating Pill) -->
         <LinearLayout
             android:id="@+id/layoutOfflineBanner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:background="#D32F2F"
-            android:elevation="12dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="56dp"
+            android:background="@drawable/offline_banner_pill_bg"
+            android:elevation="14dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="8dp"
+            android:paddingStart="14dp"
+            android:paddingTop="9dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="9dp"
             android:visibility="gone">
 
             <ImageView
@@ -58,6 +60,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Offline Mode • Playing from Downloads"
                 android:textColor="@color/white"
                 android:textSize="12sp"
@@ -67,11 +71,12 @@
                 android:id="@+id/btnOfflineGoToDownloads"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
                 android:background="@drawable/rounded_tag_bg"
                 android:paddingStart="10dp"
-                android:paddingTop="4dp"
+                android:paddingTop="5dp"
                 android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
+                android:paddingBottom="5dp"
                 android:text="View Downloads"
                 android:textColor="@color/white"
                 android:textSize="11sp"

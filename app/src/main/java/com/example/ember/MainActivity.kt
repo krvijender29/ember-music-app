@@ -7049,6 +7049,9 @@ class MainActivity : AppCompatActivity() {
                     layoutOpenedPlaylistOverlay.translationY = 0f
 
                     layoutOpenedPlaylistOverlay.alpha = 1f
+                    if (isOfflineMode && ::layoutOfflineBanner.isInitialized) {
+                        layoutOfflineBanner.visibility = View.VISIBLE
+                    }
 
                 }
 
@@ -7061,6 +7064,9 @@ class MainActivity : AppCompatActivity() {
             layoutOpenedPlaylistOverlay.translationY = 0f
 
             layoutOpenedPlaylistOverlay.alpha = 1f
+            if (isOfflineMode && ::layoutOfflineBanner.isInitialized) {
+                layoutOfflineBanner.visibility = View.VISIBLE
+            }
 
         }
 
@@ -7199,7 +7205,8 @@ class MainActivity : AppCompatActivity() {
     private fun handleOfflineTransition(autoRedirect: Boolean = false) {
         if (isOfflineMode) return
         isOfflineMode = true
-        if (::layoutOfflineBanner.isInitialized) {
+        val isOverlayOpen = ::layoutOpenedPlaylistOverlay.isInitialized && layoutOpenedPlaylistOverlay.visibility == View.VISIBLE
+        if (::layoutOfflineBanner.isInitialized && !isOverlayOpen) {
             layoutOfflineBanner.visibility = View.VISIBLE
         }
         val dlTracks = dbManager.getDownloadedTracks()
@@ -7215,6 +7222,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun openDownloadedSongsView() {
+        if (::layoutOfflineBanner.isInitialized) {
+            layoutOfflineBanner.visibility = View.GONE
+        }
         currentOpenedPlaylist = null
         currentOpenedAlbum = null
         isCurrentOpenedSaved = false
@@ -12358,6 +12368,14 @@ class MainActivity : AppCompatActivity() {
 
             viewPlaylistTopSpacer.layoutParams = spacerParams
 
+        }
+
+        if (::layoutOfflineBanner.isInitialized) {
+            val bannerParams = layoutOfflineBanner.layoutParams as? RelativeLayout.LayoutParams
+            if (bannerParams != null) {
+                bannerParams.topMargin = safeTop + dpToPx(8)
+                layoutOfflineBanner.layoutParams = bannerParams
+            }
         }
 
     }
