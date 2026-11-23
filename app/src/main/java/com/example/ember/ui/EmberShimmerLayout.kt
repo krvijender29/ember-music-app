@@ -39,7 +39,7 @@ class EmberShimmerLayout @JvmOverloads constructor(
 
     private var shimmerShader: LinearGradient? = null
 
-    var isShimmering: Boolean = true
+    var isShimmering: Boolean = false
         private set
 
     private val animator: ValueAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -77,13 +77,11 @@ class EmberShimmerLayout @JvmOverloads constructor(
     }
 
     fun startShimmer() {
-        if (!isShimmering) {
-            isShimmering = true
-            if (isAttachedToWindow && visibility == View.VISIBLE && !animator.isStarted) {
-                animator.start()
-            }
-            invalidate()
+        isShimmering = true
+        if (isShown && !animator.isStarted) {
+            animator.start()
         }
+        invalidate()
     }
 
     fun stopShimmer() {
@@ -120,7 +118,7 @@ class EmberShimmerLayout @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        if (isShimmering && visibility == View.VISIBLE && !animator.isStarted) {
+        if (isShown && isShimmering && !animator.isStarted) {
             animator.start()
         }
     }
@@ -134,7 +132,7 @@ class EmberShimmerLayout @JvmOverloads constructor(
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        if (visibility == View.VISIBLE && isShimmering && isAttachedToWindow) {
+        if (isShown && isShimmering) {
             if (!animator.isStarted) animator.start()
         } else {
             if (animator.isStarted) animator.cancel()

@@ -301,6 +301,8 @@ class MainActivity : AppCompatActivity() {
 
     // UI - Tabs
 
+    private lateinit var tabHomeContainer: View
+
     private lateinit var tabHomeView: View
 
     private lateinit var tabSearchView: View
@@ -308,6 +310,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabLibraryView: View
 
     private lateinit var tabProfileView: View
+
+    private var currentTabIndex: Int = 0
+
+    private var isHomeLoading: Boolean = false
 
 
 
@@ -1362,6 +1368,7 @@ class MainActivity : AppCompatActivity() {
         setupWindowInsets()
 
         setupBottomNavigation()
+        switchTab(0)
 
         setupRecyclerViews()
 
@@ -1410,6 +1417,8 @@ class MainActivity : AppCompatActivity() {
 
 
         // Tabs
+
+        tabHomeContainer = findViewById(R.id.tabHomeContainer)
 
         tabHomeView = findViewById(R.id.tabHomeView)
 
@@ -3596,7 +3605,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun switchTab(tabIndex: Int) {
-
+        currentTabIndex = tabIndex
         if (::layoutOpenedPlaylistOverlay.isInitialized && layoutOpenedPlaylistOverlay.visibility == View.VISIBLE) {
 
             closeOpenedPlaylistView(animate = false)
@@ -3605,6 +3614,10 @@ class MainActivity : AppCompatActivity() {
 
 
 
+        if (::tabHomeContainer.isInitialized) {
+            tabHomeContainer.visibility = if (tabIndex == 0) View.VISIBLE else View.GONE
+        }
+
         tabHomeView.visibility = if (tabIndex == 0) View.VISIBLE else View.GONE
 
         tabSearchView.visibility = if (tabIndex == 1) View.VISIBLE else View.GONE
@@ -3612,6 +3625,24 @@ class MainActivity : AppCompatActivity() {
         tabLibraryView.visibility = if (tabIndex == 2) View.VISIBLE else View.GONE
 
         tabProfileView.visibility = if (tabIndex == 3) View.VISIBLE else View.GONE
+
+        // Prevent cross-tab shimmer animation overlap: Home skeleton strictly appears only in Home tab,
+        // and Search skeleton strictly appears only in Search tab
+        if (::layoutHomeSkeleton.isInitialized) {
+            if (tabIndex == 0 && isHomeLoading) {
+                layoutHomeSkeleton.visibility = View.VISIBLE
+                layoutHomeSkeleton.alpha = 1f
+                layoutHomeSkeleton.startShimmer()
+            } else {
+                layoutHomeSkeleton.visibility = View.GONE
+                layoutHomeSkeleton.stopShimmer()
+            }
+        }
+
+        if (::layoutSearchSkeleton.isInitialized && tabIndex != 1) {
+            layoutSearchSkeleton.visibility = View.GONE
+            layoutSearchSkeleton.stopShimmer()
+        }
 
 
 
@@ -4109,6 +4140,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadHomeData() {
         if (!isNetworkAvailable()) {
+            isHomeLoading = false
             if (::layoutHomeSkeleton.isInitialized) hideHomeSkeleton()
             updateHeroGreeting()
             if (currentTrack == null) {
@@ -4120,7 +4152,8 @@ class MainActivity : AppCompatActivity() {
             handleOfflineTransition()
             return
         }
-        if (::layoutHomeSkeleton.isInitialized) {
+        isHomeLoading = true
+        if (::layoutHomeSkeleton.isInitialized && currentTabIndex == 0) {
             layoutHomeSkeleton.visibility = View.VISIBLE
             layoutHomeSkeleton.alpha = 1f
             layoutHomeSkeleton.startShimmer()
@@ -6487,15 +6520,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hideHomeSkeleton() {
-        if (::layoutHomeSkeleton.isInitialized && layoutHomeSkeleton.visibility == View.VISIBLE) {
-            layoutHomeSkeleton.animate()
-                .alpha(0f)
-                .setDuration(350L)
-                .withEndAction {
-                    layoutHomeSkeleton.visibility = View.GONE
-                    layoutHomeSkeleton.alpha = 1f
-                    layoutHomeSkeleton.stopShimmer()
-                }
+        isHomeLoading = false
+        if (::layoutHomeSkeleton.isInitialized) {
+            if (layoutHomeSkeleton.visibility == View.VISIBLE) {
+                layoutHomeSkeleton.animate()
+                    .alpha(0f)
+                    .setDuration(350L)
+                    .withEndAction {
+                        layoutHomeSkeleton.visibility = View.GONE
+                        layoutHomeSkeleton.alpha = 1f
+                        layoutHomeSkeleton.stopShimmer()
+                    }
+            } else {
+                layoutHomeSkeleton.visibility = View.GONE
+                layoutHomeSkeleton.alpha = 1f
+                layoutHomeSkeleton.stopShimmer()
+            }
         }
         pbHomeLoading?.visibility = View.GONE
     }
@@ -10381,6 +10421,7 @@ class MainActivity : AppCompatActivity() {
                     layoutOpeningLandingScreen.alpha = 1f
                     layoutMainAppShell.visibility = View.VISIBLE
                     bottomNav.visibility = View.VISIBLE
+                    switchTab(0)
                     loadHomeData()
                     refreshProfileUI()
                     updateHeroGreeting()
@@ -11763,6 +11804,8 @@ class MainActivity : AppCompatActivity() {
 
             bottomNav.visibility = View.VISIBLE
 
+            switchTab(0)
+
             loadHomeData()
 
             if (isNetworkAvailable()) {
@@ -12125,6 +12168,8 @@ class MainActivity : AppCompatActivity() {
         updateHeroGreeting()
 
         refreshProfileUI()
+
+        switchTab(0)
 
         loadHomeData()
 
